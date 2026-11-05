@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120" fill="none" role="img" aria-label="Postal Saúde">
+  <rect width="320" height="120" rx="24" fill="transparent"/>
+  
+        <g transform="translate(23 22)">
+          <rect x="0" y="0" width="60" height="60" rx="18" fill="#0D4D8B" opacity=".1"/>
+          <path d="M14 44V18h36" stroke="#0D4D8B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M18 22l17 12 11-7" stroke="#FFCC29" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+  <text x="100" y="56" fill="#0D4D8B" font-size="42" font-weight="800" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="-.03em">Postal</text>
+  <text x="100" y="88" fill="#0D4D8B" opacity="0.88" font-size="20" font-weight="700" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="0">Saúde</text>
+</svg>

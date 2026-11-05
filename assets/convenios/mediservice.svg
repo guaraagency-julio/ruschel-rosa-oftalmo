@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120" fill="none" role="img" aria-label="Mediservice Saúde">
+  <rect width="320" height="120" rx="24" fill="transparent"/>
+  
+    <g transform="translate(26 24)">
+      <rect x="0" y="0" width="54" height="54" rx="16" fill="#265AA7" opacity="0.10"/>
+      <circle cx="27" cy="27" r="14" fill="none" stroke="#265AA7" stroke-width="4"/>
+      <path d="M14 27h26" stroke="#265AA7" stroke-width="4" stroke-linecap="round"/>
+      <path d="M27 14v26" stroke="#265AA7" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+    </g>
+  <text x="100" y="56" fill="#265AA7" font-size="34" font-weight="800" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="-.03em">Mediservice</text>
+  <text x="100" y="88" fill="#265AA7" opacity="0.88" font-size="20" font-weight="700" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="0">Saúde</text>
+</svg>

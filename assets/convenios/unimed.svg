@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120" fill="none" role="img" aria-label="Unimed ">
+  <rect width="320" height="120" rx="24" fill="transparent"/>
+  
+        <g transform="translate(20 22)">
+          <rect x="0" y="0" width="66" height="58" rx="16" fill="#008E69"/>
+          <path d="M15 36c4-12 12-20 24-24 0 12-8 21-24 24Z" fill="#fff" opacity=".95"/>
+          <path d="M37 17v20" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+          <path d="M27 27h20" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+        </g>
+  <text x="100" y="67" fill="#008E69" font-size="42" font-weight="800" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="-.03em">Unimed</text>
+  
+</svg>

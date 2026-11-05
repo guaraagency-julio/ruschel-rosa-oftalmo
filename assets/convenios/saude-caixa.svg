@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120" fill="none" role="img" aria-label="CAIXA Saúde Caixa">
+  <rect width="320" height="120" rx="24" fill="transparent"/>
+  
+        <g transform="translate(27 29)">
+          <path d="M0 5L15 20L0 35" fill="none" stroke="#F39200" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 5L5 20L20 35" fill="none" stroke="#005CA9" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+  <text x="100" y="56" fill="#005CA9" font-size="42" font-weight="800" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="-.03em">CAIXA</text>
+  <text x="100" y="88" fill="#005CA9" opacity="0.88" font-size="20" font-weight="700" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="0">Saúde Caixa</text>
+</svg>

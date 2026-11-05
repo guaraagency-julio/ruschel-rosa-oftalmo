@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120" fill="none" role="img" aria-label="Petrobras Saúde">
+  <rect width="320" height="120" rx="24" fill="transparent"/>
+  
+        <g transform="translate(20 24)">
+          <rect x="0" y="0" width="62" height="16" rx="8" fill="#F4C400"/>
+          <rect x="0" y="20" width="62" height="16" rx="8" fill="#007A53"/>
+          <rect x="0" y="40" width="62" height="16" rx="8" fill="#F4C400"/>
+        </g>
+  <text x="100" y="56" fill="#007A53" font-size="42" font-weight="800" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="-.03em">Petrobras</text>
+  <text x="100" y="88" fill="#007A53" opacity="0.88" font-size="20" font-weight="700" font-family="Inter, Segoe UI, Arial, sans-serif" letter-spacing="0">Saúde</text>
+</svg>

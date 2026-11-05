@@ -1,30 +1,30 @@
 const WA='https://wa.me/5551980283131';
 const insurers=[
-  {name:'AFISVEC',short:'AFISVEC',color:'#24516b'},
-  {name:'Allianz',short:'Allianz',color:'#003781',domain:'allianz.com.br'},
-  {name:'Amil',short:'amil',color:'#0069aa',domain:'amil.com.br'},
-  {name:'Bradesco Saúde',short:'bradesco saúde',color:'#cc1738',domain:'bradescoseguros.com.br'},
-  {name:'Cabergs',short:'CABERGS',color:'#315778',domain:'cabergs.org.br'},
-  {name:'Caixa Econômica Federal / Saúde Caixa',short:'Saúde Caixa',color:'#0068a0',domain:'caixa.gov.br'},
-  {name:'Cassi',short:'CASSI',color:'#036a6e',domain:'cassi.com.br'},
-  {name:'Doctor Clin MAX',short:'Doctor Clin',color:'#25728b',domain:'doctorclin.com.br'},
-  {name:'Gama',short:'GAMA',color:'#1e6472'},
-  {name:'Geap',short:'GEAP',color:'#1579a1',domain:'geap.org.br'},
-  {name:'Golden Cross',short:'Golden Cross',color:'#b29243',domain:'goldencross.com.br'},
-  {name:'Ipasem C.B.',short:'IPASEM C.B.',color:'#366475'},
-  {name:'Ipasem NH',short:'IPASEM NH',color:'#366475'},
-  {name:'Irmãs ACSC',short:'Irmãs ACSC',color:'#7e5574'},
-  {name:'Life Empresarial Saúde',short:'Life Saúde',color:'#39775b'},
-  {name:'Mediservice',short:'Mediservice',color:'#3065a0',domain:'mediservice.com.br'},
-  {name:'Onmed',short:'ONMED',color:'#42778b'},
-  {name:'Particular',short:'Particular',color:'#97734c'},
-  {name:'Petrobrás Saúde',short:'Petrobras Saúde',color:'#0b735c',domain:'petrobras.com.br'},
-  {name:'Postal Saúde / Correios',short:'Postal Saúde',color:'#125a9d',domain:'postalsaude.com.br'},
-  {name:'Proasa',short:'PROASA',color:'#34678d'},
-  {name:'SaudePas',short:'SaudePas',color:'#5a7b62'},
-  {name:'SulAmérica',short:'SulAmérica',color:'#dc722c',domain:'sulamerica.com.br'},
-  {name:'Unimed',short:'Unimed',color:'#008e69',domain:'unimed.coop.br'},
-  {name:'Usisaúde',short:'Usisaúde',color:'#5b80a9'}
+  {name:'AFISVEC',short:'AFISVEC',display:'AFISVEC',color:'#24516b',logo:'assets/convenios/afisvec.svg'},
+  {name:'Allianz',short:'Allianz',display:'Allianz',color:'#003781',logo:'assets/convenios/allianz.svg'},
+  {name:'Amil',short:'amil',display:'Amil',color:'#0069aa',logo:'assets/convenios/amil.svg'},
+  {name:'Bradesco Saúde',short:'bradesco saúde',display:'Bradesco Saúde',color:'#cc1738',logo:'assets/convenios/bradesco-saude.svg'},
+  {name:'Cabergs',short:'CABERGS',display:'CABERGS',color:'#315778',logo:'assets/convenios/cabergs.svg'},
+  {name:'Caixa Econômica Federal / Saúde Caixa',short:'Saúde Caixa',display:'Saúde Caixa',color:'#0068a0',logo:'assets/convenios/saude-caixa.svg'},
+  {name:'Cassi',short:'CASSI',display:'CASSI',color:'#036a6e',logo:'assets/convenios/cassi.svg'},
+  {name:'Doctor Clin MAX',short:'Doctor Clin',display:'Doctor Clin MAX',color:'#25728b',logo:'assets/convenios/doctor-clin.svg'},
+  {name:'Gama',short:'GAMA',display:'GAMA',color:'#1e6472',logo:'assets/convenios/gama.svg'},
+  {name:'Geap',short:'GEAP',display:'GEAP',color:'#1579a1',logo:'assets/convenios/geap.svg'},
+  {name:'Golden Cross',short:'Golden Cross',display:'Golden Cross',color:'#b29243',logo:'assets/convenios/golden-cross.svg'},
+  {name:'Ipasem C.B.',short:'IPASEM C.B.',display:'IPASEM C.B.',color:'#366475',logo:'assets/convenios/ipasem-cb.svg'},
+  {name:'Ipasem NH',short:'IPASEM NH',display:'IPASEM NH',color:'#366475',logo:'assets/convenios/ipasem-nh.svg'},
+  {name:'Irmãs ACSC',short:'Irmãs ACSC',display:'Irmãs ACSC',color:'#7e5574',logo:'assets/convenios/irmas-acsc.svg'},
+  {name:'Life Empresarial Saúde',short:'Life Saúde',display:'Life Saúde',color:'#39775b',logo:'assets/convenios/life-saude.svg'},
+  {name:'Mediservice',short:'Mediservice',display:'Mediservice',color:'#3065a0',logo:'assets/convenios/mediservice.svg'},
+  {name:'Onmed',short:'ONMED',display:'ONMED',color:'#42778b',logo:'assets/convenios/onmed.svg'},
+  {name:'Particular',short:'Particular',display:'Atendimento Particular',color:'#97734c',logo:'assets/convenios/particular.svg'},
+  {name:'Petrobrás Saúde',short:'Petrobras Saúde',display:'Petrobras Saúde',color:'#0b735c',logo:'assets/convenios/petrobras-saude.svg'},
+  {name:'Postal Saúde / Correios',short:'Postal Saúde',display:'Postal Saúde',color:'#125a9d',logo:'assets/convenios/postal-saude.svg'},
+  {name:'Proasa',short:'PROASA',display:'PROASA',color:'#34678d',logo:'assets/convenios/proasa.svg'},
+  {name:'SaudePas',short:'SaudePas',display:'SaudePas',color:'#5a7b62',logo:'assets/convenios/saudepas.svg'},
+  {name:'SulAmérica',short:'SulAmérica',display:'SulAmérica',color:'#dc722c',logo:'assets/convenios/sulamerica.svg'},
+  {name:'Unimed',short:'Unimed',display:'Unimed',color:'#008e69',logo:'assets/convenios/unimed.svg'},
+  {name:'Usisaúde',short:'Usisaúde',display:'Usisaúde',color:'#5b80a9',logo:'assets/convenios/usisaude.svg'}
 ];
 const menuToggle=document.querySelector('#menu-toggle');const mobileMenu=document.querySelector('#mobile-menu');
 function closeMenu(){mobileMenu.classList.remove('open');mobileMenu.inert=true;document.body.classList.remove('menu-open');menuToggle.setAttribute('aria-expanded','false');menuToggle.setAttribute('aria-label','Abrir menu');menuToggle.querySelector('use').setAttribute('href','#i-menu')}
@@ -35,10 +35,46 @@ const normalize=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase
 const grid=document.querySelector('#insurance-grid'),count=document.querySelector('#insurance-count'),empty=document.querySelector('#insurance-empty'),search=document.querySelector('#insurance-query');
 // The nameplates are intentionally self-contained. For brands with validated public websites,
 // show a favicon as an accent; fallback remains accessible if the remote icon does not load.
-function makeInsuranceCard(insurance){const card=document.createElement('div');card.className='insurance-card';card.style.setProperty('--brand-color',insurance.color);if(insurance.name.length>18)card.dataset.long='true';let mark=document.createElement('span');mark.className='logo-fallback';mark.textContent=insurance.short.slice(0,1).toUpperCase();mark.setAttribute('aria-hidden','true');if(insurance.domain){const img=document.createElement('img');img.className='logo-image';img.width=33;img.height=33;img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.addEventListener('load',()=>{if(img.naturalWidth>0){mark.replaceWith(img)}});img.addEventListener('error',()=>{img.remove()});img.src=`https://www.google.com/s2/favicons?domain=${encodeURIComponent(insurance.domain)}&sz=128`;}const label=document.createElement('span');label.className='insurance-name';label.textContent=insurance.short;card.append(mark,label);card.setAttribute('aria-label',insurance.name);return card}
+function makeInsuranceCard(insurance){
+  const card=document.createElement('div');
+  card.className='insurance-card';
+  card.style.setProperty('--brand-color',insurance.color);
+  if(insurance.display.length>17)card.dataset.long='true';
+  const logoWrap=document.createElement('div');
+  logoWrap.className='insurance-logo-wrap';
+  const img=document.createElement('img');
+  img.className='logo-image';
+  img.width=180;
+  img.height=68;
+  img.alt=`Logo ${insurance.display}`;
+  img.loading='lazy';
+  img.decoding='async';
+  img.src=insurance.logo;
+  logoWrap.append(img);
+  const label=document.createElement('span');
+  label.className='insurance-name';
+  label.textContent=insurance.display;
+  card.append(logoWrap,label);
+  card.setAttribute('aria-label',insurance.name);
+  return card
+}
 function renderInsurers(query=''){const items=insurers.filter(i=>normalize(i.name).includes(normalize(query.trim())));const fragment=document.createDocumentFragment();items.forEach(i=>fragment.append(makeInsuranceCard(i)));grid.replaceChildren(fragment);count.textContent=`${items.length} ${items.length===1?'opção listada':'opções listadas'}`;empty.hidden=items.length!==0}
 renderInsurers();search.addEventListener('input',()=>renderInsurers(search.value));
-const marquee=document.querySelector('#insurance-band-track');const featured=['Unimed','Bradesco Saúde','Amil','SulAmérica','Allianz','Cassi','Doctor Clin MAX','Geap'];const items=featured.map(n=>insurers.find(i=>i.name===n));for(let i=0;i<2;i++)items.forEach(ins=>{const label=document.createElement('div');label.className='insurance-band-item';label.style.color=ins.color;const mark=document.createElement('span');mark.style.borderRadius=ins.name==='Unimed'?'40% 40% 0 40%':'50%';label.append(mark,document.createTextNode(ins.short));marquee.append(label)});
+const marquee=document.querySelector('#insurance-band-track');
+const featured=['Unimed','Bradesco Saúde','Amil','SulAmérica','Allianz','Cassi','Doctor Clin MAX','Geap'];
+const marqueeItems=featured.map(n=>insurers.find(i=>i.name===n)).filter(Boolean);
+for(let i=0;i<2;i++)marqueeItems.forEach(ins=>{
+  const item=document.createElement('div');
+  item.className='insurance-band-item';
+  item.setAttribute('aria-hidden','true');
+  const img=document.createElement('img');
+  img.src=ins.logo;
+  img.alt='';
+  img.loading='lazy';
+  img.decoding='async';
+  item.append(img);
+  marquee.append(item);
+});
 const track=document.querySelector('#gallery-track'),slides=[...track.querySelectorAll('.gallery-card')],counter=document.querySelector('#gallery-count');function currentSlide(){let i=0;let distance=Infinity;slides.forEach((s,n)=>{const d=Math.abs(s.offsetLeft-track.scrollLeft-track.offsetLeft);if(d<distance){distance=d;i=n}});return i}function updateCounter(){counter.textContent=`${String(currentSlide()+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}`}function moveGallery(direction){const i=currentSlide();const next=Math.max(0,Math.min(slides.length-1,i+direction));slides[next].scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'nearest',inline:'start'})}document.querySelector('#gallery-prev').addEventListener('click',()=>moveGallery(-1));document.querySelector('#gallery-next').addEventListener('click',()=>moveGallery(1));track.addEventListener('scroll',updateCounter,{passive:true});window.addEventListener('resize',updateCounter);updateCounter();
 document.querySelector('#year').textContent=new Date().getFullYear();
 
@@ -112,3 +148,41 @@ motionPreference.addEventListener('change',()=>{
   setupReveals();scheduleScrollMotion();
 });
 scheduleScrollMotion();
+
+
+// Google reviews carousel — native scroll snapping, touch and keyboard friendly.
+const reviewTrack=document.querySelector('#reviews-track');
+const reviewCards=reviewTrack?[...reviewTrack.querySelectorAll('.review-card')]:[];
+const reviewPosition=document.querySelector('#reviews-position');
+const reviewPrev=document.querySelector('#reviews-prev');
+const reviewNext=document.querySelector('#reviews-next');
+if(reviewTrack && reviewCards.length){
+  const currentReview=()=>{
+    const scrollLeft=reviewTrack.scrollLeft;
+    let index=0, distance=Infinity;
+    reviewCards.forEach((card,i)=>{
+      const d=Math.abs(card.offsetLeft-reviewCards[0].offsetLeft-scrollLeft);
+      if(d<distance){distance=d;index=i}
+    });
+    return index;
+  };
+  const updateReviewPosition=()=>{
+    const current=currentReview();
+    reviewPosition.textContent=`${String(current+1).padStart(2,'0')} / ${String(reviewCards.length).padStart(2,'0')}`;
+    reviewPrev.disabled=current===0;
+    reviewNext.disabled=current===reviewCards.length-1;
+  };
+  const goReview=(direction)=>{
+    const next=Math.max(0,Math.min(reviewCards.length-1,currentReview()+direction));
+    reviewTrack.scrollTo({left:reviewCards[next].offsetLeft-reviewCards[0].offsetLeft,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+  };
+  reviewPrev.addEventListener('click',()=>goReview(-1));
+  reviewNext.addEventListener('click',()=>goReview(1));
+  reviewTrack.addEventListener('scroll',updateReviewPosition,{passive:true});
+  reviewTrack.addEventListener('keydown',event=>{
+    if(event.key==='ArrowRight'){event.preventDefault();goReview(1)}
+    if(event.key==='ArrowLeft'){event.preventDefault();goReview(-1)}
+  });
+  window.addEventListener('resize',updateReviewPosition,{passive:true});
+  updateReviewPosition();
+}
