@@ -41,3 +41,11 @@ São cores aproximadas da referência enviada e refináveis a partir do arquivo 
 ## Acessibilidade
 - `lang="pt-BR"`, landmarks semânticos, texto alternativo, links discerníveis, focus-visible, tabs com ARIA e setas do teclado, menu com `aria-expanded`, `inert` e Escape, cards com texto legível, reduced motion.
 - Alvos touch >= 44 px para ícones de menu e galeria; CTA persistente >= 52 px.
+
+## Motion e localizações — versão 2
+- Foco narrativo: abertura com cortina fotográfica; texto e imagem em ritmos distintos.
+- Com scroll: barra de progresso, zoom progressivo na fotografia inicial, ajuste óptico sutil do símbolo GR, zoom nas imagens da galeria e entradas variadas somente em marcos de conteúdo.
+- Sem Three.js: transforms nativos, `requestAnimationFrame` e `IntersectionObserver` para renderização estável no Samsung S23; conteúdo continua presente caso JS falhe.
+- `prefers-reduced-motion` desliga movimentos decorativos e mantém ações funcionais.
+- Instagram ganhou espaço editorial e CTAs no menu, hero, seção e rodapé.
+- Dois locais de atendimento documentados: Novo Hamburgo — Centro Clínico Regina; Nova Petrópolis — Espaço Nova Forma, Rua Rio Branco, 818, sala 01. Ambos usam iframe padrão do Google Maps com links de rota.

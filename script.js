@@ -45,3 +45,70 @@ document.querySelector('#year').textContent=new Date().getFullYear();
 // Show the persistent booking CTA only after the opening presentation has left the viewport.
 const heroSection=document.querySelector('.hero'),mobileSticky=document.querySelector('.mobile-sticky');
 const stickyObserver=new IntersectionObserver(entries=>{mobileSticky.classList.toggle('is-visible',!entries[0].isIntersecting)},{threshold:0});stickyObserver.observe(heroSection);
+
+
+/* Cinema editorial: animações vinculadas ao scroll (sem dependências externas).
+   Elementos começam visíveis no CSS base. Respeita redução de movimento. */
+const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
+const reveals=[...document.querySelectorAll('[data-reveal]')];
+let revealObserver;
+function setupReveals(){
+  if(revealObserver){revealObserver.disconnect();revealObserver=undefined;}
+  if(motionPreference.matches || !('IntersectionObserver' in window)){
+    document.documentElement.classList.remove('motion-enabled');
+    reveals.forEach(el=>el.classList.add('is-inview'));
+    return;
+  }
+  // Marcação antes de ativar o CSS para evitar movimento de volta em elementos já visíveis.
+  const viewportHeight=window.innerHeight;
+  reveals.forEach(el=>{
+    const box=el.getBoundingClientRect();
+    if(box.top<viewportHeight*.93 && box.bottom>0)el.classList.add('is-inview');
+  });
+  document.documentElement.classList.add('motion-enabled');
+  revealObserver=new IntersectionObserver(entries=>{
+    entries.forEach(({target,isIntersecting})=>{
+      if(isIntersecting){target.classList.add('is-inview');revealObserver.unobserve(target);}
+    });
+  },{rootMargin:'0px 0px -9% 0px',threshold:0.06});
+  reveals.filter(el=>!el.classList.contains('is-inview')).forEach(el=>revealObserver.observe(el));
+}
+setupReveals();
+const progress=document.querySelector('.scroll-progress');
+const heroPhoto=document.querySelector('.hero-visual');
+const eyeSymbol=document.querySelector('.about-graphic');
+const galleryPhotos=[...document.querySelectorAll('.gallery-card img')];
+let scrollFrame=0;
+function renderScrollMotion(){
+  scrollFrame=0;
+  const doc=document.documentElement;
+  const totalScroll=Math.max(1,doc.scrollHeight-window.innerHeight);
+  progress.style.transform=`scaleX(${Math.min(1,Math.max(0,window.scrollY/totalScroll))})`;
+  if(motionPreference.matches)return;
+  // Suaves mudanças de escala ligadas à distância efetiva de rolagem, sempre limitadas.
+  const heroProgress=Math.min(1,Math.max(0,window.scrollY/Math.max(1,heroPhoto.offsetHeight)));
+  heroPhoto.style.setProperty('--hero-scale',(1+heroProgress*.105).toFixed(4));
+  heroPhoto.style.setProperty('--hero-shift',`${(heroProgress*-12).toFixed(1)}px`);
+  const eyeBox=eyeSymbol.getBoundingClientRect();
+  if(eyeBox.top<window.innerHeight+150 && eyeBox.bottom>-150){
+    const travel=(window.innerHeight*.5-eyeBox.top-eyeBox.height*.5)/window.innerHeight;
+    eyeSymbol.style.setProperty('--eye-rotation',`${Math.max(-7,Math.min(7,travel*10)).toFixed(2)}deg`);
+    eyeSymbol.style.setProperty('--eye-scale',(1.005+Math.max(0,Math.min(.08,(travel+.35)*.06))).toFixed(3));
+  }
+  galleryPhotos.forEach(img=>{
+    const r=img.getBoundingClientRect();
+    if(r.top>window.innerHeight+50||r.bottom<-50)return;
+    const midpoint=r.top+r.height/2;
+    const centerDistance=Math.min(1,Math.abs(midpoint-window.innerHeight/2)/(window.innerHeight+r.height));
+    img.style.setProperty('--gallery-scale',(1.012+centerDistance*.075).toFixed(4));
+  });
+}
+function scheduleScrollMotion(){if(!scrollFrame)scrollFrame=requestAnimationFrame(renderScrollMotion);}
+window.addEventListener('scroll',scheduleScrollMotion,{passive:true});
+window.addEventListener('resize',scheduleScrollMotion,{passive:true});
+track.addEventListener('scroll',scheduleScrollMotion,{passive:true});
+motionPreference.addEventListener('change',()=>{
+  if(motionPreference.matches){heroPhoto.style.removeProperty('--hero-scale');heroPhoto.style.removeProperty('--hero-shift');eyeSymbol.style.removeProperty('--eye-rotation');eyeSymbol.style.removeProperty('--eye-scale');galleryPhotos.forEach(i=>i.style.removeProperty('--gallery-scale'));}
+  setupReveals();scheduleScrollMotion();
+});
+scheduleScrollMotion();
