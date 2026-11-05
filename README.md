@@ -1,39 +1,44 @@
-# Ruschel Rosa — Oftalmologia | Prévia
+# Dr. Guilherme Ruschel Rosa — Oftalmologia
 
-Prévia institucional responsiva desenvolvida pela **Guará Agency** para apresentação ao médico Guilherme Ruschel Rosa. Design mobile-first com identidade visual original, fotos disponibilizadas, CRM/RQE, conteúdo de formação, áreas de atuação, convênios, localização e WhatsApp.
+Prévia institucional responsiva desenvolvida pela **Guará Agency** para apresentação comercial ao Dr. Guilherme Ruschel Rosa.
+
+## Estado do projeto
+- **Código publicado no GitHub:** `guaraagency-julio/ruschel-rosa-oftalmo`, branch `main`.
+- **Hospedagem Cloudflare Pages:** configuração pendente.
+- **Revisão médica, publicidade e direitos de imagem:** pendentes de aprovação.
+- **Logos dos convênios:** representações tipográficas provisórias; substituir por arquivos oficiais autorizados antes do lançamento definitivo.
 
 ## Visualizar localmente
-Basta abrir `index.html` no Chrome/Edge ou servir a pasta com `python -m http.server 8000` e visitar `http://localhost:8000`. Não há dependências de Node, npm ou build. As fontes web podem usar fallback do sistema se estiver sem internet.
+O projeto é estático (HTML, CSS e JavaScript), sem dependências de instalação.
 
-## Publicar pelo GitHub + Cloudflare Pages
-1. Na conta GitHub **guaraagency-julio**, criar um repositório chamado `ruschel-rosa-oftalmo` (recomendável **privado** até aprovar conteúdo e direitos das imagens).
-2. Enviar todos os arquivos de produção da raiz deste projeto, inclusive `assets/`, `index.html`, `styles.css`, `script.js`, `robots.txt` e `_headers`.
-3. No painel da Cloudflare: Workers & Pages → Create application → Pages → Import an existing Git repository; selecionar `guaraagency-julio/ruschel-rosa-oftalmo`.
-4. Framework preset: **None**. Build command: **em branco**. Build output directory: `/` (raiz estática do repositório; se o painel exigir diretório explícito, utilizar `.`).
-5. Publicar e abrir a URL `*.pages.dev` no Samsung S23, via Chrome e rede móvel. Confirmar fotos, convênios, menus e links.
+Abra `index.html` em um navegador ou execute:
+```bash
+python -m http.server 8000
+```
+E acesse `http://localhost:8000`.
 
-> O GitHub connector acessível neste chat não disponibilizou uma ação de **criar repositório**, e o repositório solicitado retornou `404` na consulta. Portanto, nenhum commit remoto ou deploy Cloudflare foi executado. O ZIP está preparado para importar assim que o repositório existir.
-
-## Conteúdo e licenças
-- A **marca principal** foi isolada do screenshot entregue para demonstração. Uma versão vetorial oficial, quando disponível, deve substituí-la na versão pública.
-- Fotografias enviadas pelo cliente durante o briefing. Sua exibição pública depende de autorização do titular e de terceiros eventualmente retratados.
-- Logos de convênios: esta prévia exibe **wordmarks tipográficos de demonstração** e, para alguns, favicons remotos como detalhe visual. Ainda falta a substituição por todos os logos oficiais. O fallback textual funciona sem rede.
-- Relação de convênios baseada em fonte pública; planos e procedimentos devem ser confirmados no momento do agendamento.
-- Endereço e CRM/RQE: referências em `docs/PRODUCT.md`. Nenhum CEP foi colocado devido a divergência entre fontes.
-- A prévia inclui `noindex`, `robots.txt` e `X-Robots-Tag`, porque ainda precisa de aprovação do médico.
-
-## Conformidade
-Conferir a versão final com a Resolução CFM 2.336/2023 e o manual oficial de publicidade médica, incluindo identificação de profissional, especialidade, RQE e uso das imagens. Este projeto não coleta dados pessoais pelo site: o botão direciona ao WhatsApp externo.
+## Publicar no Cloudflare Pages
+1. Abra o painel Cloudflare e escolha **Workers & Pages → Create → Pages → Connect to Git**.
+2. Autorize a integração com o GitHub, se necessário, e selecione `guaraagency-julio/ruschel-rosa-oftalmo`.
+3. Configure **Production branch**: `main`.
+4. Escolha **Framework preset**: `None`; deixe **Build command** vazio e escolha **Build output directory**: `/` ou `.`, conforme o formulário.
+5. Inicie o deploy e teste o domínio `*.pages.dev` no celular. Confira o menu, os botões WhatsApp, as fotografias, as abas de especialidades e a busca de convênios.
 
 ## Estrutura
-- `index.html` — conteúdo e semântica
-- `styles.css` — sistema responsivo e motion
-- `script.js` — menu, tabs, convênios, galeria, CTA móvel
-- `assets/` — símbolo/marca e fotos do briefing
-- `docs/` — prompt mestre, planejamento e sistema visual
+- `index.html` — conteúdo, metadados, semântica e dados estruturados
+- `styles.css` — identidade visual, layout responsivo e movimento
+- `script.js` — navegação, galeria, abas e pesquisa de convênios
+- `assets/` — fotografias otimizadas e elementos gráficos
+- `docs/` — PRODUCT.md, DESIGN.md, prompt mestre e plano de execução
+- `robots.txt` e `_headers` — proteção provisória contra indexação; remover quando aprovado
 
-## Referências técnicas
-- https://developers.cloudflare.com/pages/get-started/git-integration/
-- https://www.centroclinicoregina.com.br/medico/guilherme-ruschel-rosa
-- https://www.somehr.com.br/corpo-clinico/355
-- https://publicidademedica.cfm.org.br/
+## Conteúdo e conformidade
+- Os dados profissionais foram extraídos das informações e fontes públicas fornecidas durante o briefing.
+- A marca foi isolada de material de referência; solicitar versão vetorial oficial para a publicação final.
+- O uso público das fotos precisa de autorização do profissional e dos demais retratados.
+- A relação de convênios deve ser confirmada com a clínica; exibição de um convênio não assegura cobertura.
+- O CEP foi omitido devido a divergências entre as fontes.
+- Verificar conformidade com a Resolução CFM 2.336/2023 e manual oficial de publicidade médica antes da publicação institucional.
+- Os links de contato direcionam a serviços externos; o site não hospeda formulário de dados pessoais.
+
+Fontes: [Centro Clínico Regina](https://www.centroclinicoregina.com.br/medico/guilherme-ruschel-rosa), [SOMEHR](https://www.somehr.com.br/corpo-clinico/355), [Publicidade Médica — CFM](https://publicidademedica.cfm.org.br/).
