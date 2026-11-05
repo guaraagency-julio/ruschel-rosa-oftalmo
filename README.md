@@ -4,7 +4,7 @@ Prévia institucional responsiva desenvolvida pela **Guará Agency** para aprese
 
 ## Estado do projeto
 - **Código publicado no GitHub:** `guaraagency-julio/ruschel-rosa-oftalmo`, branch `main`.
-- **Hospedagem Cloudflare Pages:** configuração pendente.
+- **Hospedagem Cloudflare Workers (assets estáticos):** configuração adicionada; conferir o deploy na Cloudflare.
 - **Revisão médica, publicidade e direitos de imagem:** pendentes de aprovação.
 - **Logos dos convênios:** representações tipográficas provisórias; substituir por arquivos oficiais autorizados antes do lançamento definitivo.
 
@@ -17,12 +17,16 @@ python -m http.server 8000
 ```
 E acesse `http://localhost:8000`.
 
-## Publicar no Cloudflare Pages
-1. Abra o painel Cloudflare e escolha **Workers & Pages → Create → Pages → Connect to Git**.
-2. Autorize a integração com o GitHub, se necessário, e selecione `guaraagency-julio/ruschel-rosa-oftalmo`.
-3. Configure **Production branch**: `main`.
-4. Escolha **Framework preset**: `None`; deixe **Build command** vazio e escolha **Build output directory**: `/` ou `.`, conforme o formulário.
-5. Inicie o deploy e teste o domínio `*.pages.dev` no celular. Confira o menu, os botões WhatsApp, as fotografias, as abas de especialidades e a busca de convênios.
+## Publicar pelo Cloudflare Workers Builds
+O projeto está configurado para publicação estática por Workers (sem servidor Node em execução).
+
+1. Em **Workers & Pages**, abra o Worker conectado a `guaraagency-julio/ruschel-rosa-oftalmo`.
+2. Em **Settings → Builds**, deixe **Root directory** como `/`, **Build command** como `npm run build` e **Deploy command** como `npx wrangler deploy`.
+3. Em `main`, os arquivos `package.json` e `build.mjs` geram `dist/`, com HTML, CSS, JS, assets, `_headers` e `robots.txt`.
+4. `wrangler.jsonc` indica `dist/` como diretório de assets. Execute um novo deploy, se ainda não tiver iniciado automaticamente.
+5. Teste a URL `*.workers.dev` exibida no painel, especialmente no Samsung S23; confira menu, WhatsApp, fotografias, abas e busca de convênios.
+
+**Alternativa Cloudflare Pages:** caso deseje criar um projeto Pages separado, use preset `None`, comando de build `npm run build` e diretório de saída `dist`.
 
 ## Estrutura
 - `index.html` — conteúdo, metadados, semântica e dados estruturados
