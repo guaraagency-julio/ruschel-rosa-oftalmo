@@ -179,3 +179,102 @@
 @media(max-width:700px){.reviews{padding-block:78px 90px}.reviews h2{font-size:clamp(41px,11vw,57px);margin-bottom:28px}.reviews-rating{gap:18px;padding:20px 0}.reviews-score{font-size:76px}.reviews-stars svg{width:18px;height:18px}.reviews-count{font-size:12px}.reviews-note{font-size:10px;margin-bottom:14px}.reviews-display{margin:0 -21px 0 0}.reviews-track{scroll-padding-left:1px;gap:12px;padding:8px 20px 16px 1px}.review-card{flex-basis:min(85vw,344px);padding:24px 21px 21px;min-height:304px}.review-card blockquote{font-size:14px;line-height:1.72}.review-card-footer{flex-wrap:wrap}.reviews-controls{margin:5px 21px 0 0}.reviews-arrow{width:46px;height:46px}}
 @media(max-width:355px){.reviews-score{font-size:65px}.review-card{flex-basis:min(85vw,290px)}}
 @media(prefers-reduced-motion:reduce){.reviews-track{scroll-behavior:auto}.reviews-google-link{transition:none}.reviews-arrow{transition:none}}
+
+
+/* -------- V5 · Navegação multipágina e densidade editorial -------- */
+:root{--space-section:clamp(46px,6vw,82px)}
+.section{padding-block:var(--space-section)}
+.section-label{margin-bottom:20px}
+.gallery-heading{margin-bottom:24px}
+.specialties-header{margin-bottom:28px}
+.insurance-top{margin-bottom:25px}
+.insurance-band{margin-bottom:28px}
+.insurance-feature{display:none}
+.about-grid{gap:clamp(30px,5vw,75px);grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);align-items:start}
+.about-right h2{margin-bottom:22px}
+.about-right p{line-height:1.75;margin-bottom:14px}
+.timeline{margin-block:22px}
+.timeline>div{padding:14px 0}
+.approach-grid{gap:clamp(32px,5vw,85px)}
+.step{padding:18px 0}
+.gallery{padding-bottom:54px}
+.gallery-heading{margin-bottom:24px}
+.gallery-card img{height:clamp(260px,30vw,390px)}
+.faq-items summary{padding-block:19px}
+.location{padding-bottom:60px}
+.closing{padding-block:62px 72px}
+.breadcrumbs{display:flex;align-items:center;gap:10px;padding-block:19px 0;font-size:12px;color:#6f777d}
+.breadcrumbs a{color:#816039;text-decoration:underline;text-underline-offset:4px}
+.breadcrumbs>span:nth-of-type(1){opacity:.45}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.desktop-nav{gap:clamp(10px,1.1vw,20px)}
+.desktop-nav a{font-size:11px}
+.desktop-nav a.is-active,.desktop-nav a[aria-current=page]{color:#e6bc85;text-decoration:underline;text-decoration-color:#c59d6e;text-underline-offset:11px}
+.mobile-menu>a[aria-current=page]{color:#ebc292}
+.about-photo{margin:20px 0 0;position:relative;height:clamp(430px,50vw,690px);overflow:hidden;background:#e7e3df;border-radius:2px}
+.about-photo:after{content:'';position:absolute;inset:58% 0 0;pointer-events:none;background:linear-gradient(0deg,rgba(6,21,35,.7),transparent)}
+.about-photo>img{width:100%;height:100%;object-fit:cover;object-position:50% 44%;transition:transform 700ms var(--easing)}
+.about-photo:hover>img{transform:scale(1.025)}
+.about-photo figcaption{position:absolute;z-index:1;bottom:22px;left:24px;right:20px;color:white;font-size:11px;font-weight:700;letter-spacing:.13em}
+.about-photo figcaption span{display:block;font-weight:400;font-size:10px;letter-spacing:.09em;opacity:.86;margin-top:4px}
+.home-bio{background:var(--paper)}
+.home-bio-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(230px,.6fr);gap:clamp(28px,8vw,125px);align-items:center}
+.home-bio h2{max-width:740px;margin:0 0 20px;font-size:clamp(40px,4.7vw,68px)}
+.home-bio p{max-width:58ch;color:#66717a;font-size:15px;line-height:1.75;margin-bottom:24px}
+.home-bio-photo{margin:0;height:300px;overflow:hidden;background:#e6e4e0;position:relative}
+.home-bio-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 35%}
+.home-explore{background:#eee9e2}
+.home-explore h2{font-size:clamp(38px,4.5vw,64px);margin:0 0 24px}
+.home-explore-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 36px;border-top:1px solid #d4ccc3}
+.home-explore-links a{display:flex;gap:18px;align-items:center;padding:25px 4px;border-bottom:1px solid #d4ccc3;min-width:0;transition:color .25s}
+.home-explore-links a:hover{color:#956a3d}
+.home-explore-links strong{display:block;font:400 clamp(23px,2.2vw,32px)/1.18 var(--serif)}
+.home-explore-links small{display:block;font-size:12px;color:#6d767c;line-height:1.5;margin-top:6px}
+.home-explore-index{font:12px var(--sans);color:#a77f50;align-self:flex-start;padding-top:6px}
+.home-explore-links .icon{margin-left:auto;color:#af8758}
+body[data-page=index] .hero-footer{padding-top:26px}
+body[data-page=index] .hero{min-height:min(650px,calc(100svh - 123px))}
+body[data-page=sobre] .about{padding-top:40px}
+body[data-page=especialidades] .specialties{padding-top:40px}
+body[data-page=convenios] .insurances{padding-top:40px}
+body[data-page=avaliacoes] .reviews{padding-top:40px}
+body[data-page=contato] .location{padding-top:40px}
+body[data-page=convenios] .insurance-top{margin-bottom:34px}
+body[data-page=avaliacoes] .reviews-layout{align-items:start}
+body[data-page=avaliacoes] .reviews{min-height:580px}
+body[data-page=contato] .location-heading{margin-bottom:34px}
+@media(max-width:1250px){.desktop-nav,.header-cta{display:none}.menu-toggle{width:47px;height:45px;background:transparent;border:1px solid #405066;display:grid;place-items:center;color:#d4b58a;flex:none}.mobile-menu{display:flex;flex-direction:column;position:fixed;inset:123px 0 0;background:#102034;color:#fff;z-index:90;padding:25px max(24px,7vw) 40px;transform:translateX(100%);visibility:hidden;transition:transform .45s var(--easing),visibility .45s;overflow-y:auto}.mobile-menu.open{transform:translateX(0);visibility:visible}.mobile-menu>a:not(.mobile-menu-contact):not(.mobile-menu-social){font-size:clamp(22px,3.3vw,32px);padding:11px 0}}
+@media(max-width:700px){
+ :root{--space-section:58px}
+ .section-label{margin-bottom:20px}
+ .breadcrumbs{padding-block:14px 0;font-size:11px}
+ .mobile-menu{inset:99px 0 0;padding-top:23px}
+ .mobile-menu>a:not(.mobile-menu-contact):not(.mobile-menu-social){font-size:clamp(22px,5vw,30px);padding:11px 0}
+ .about-grid{display:flex;flex-direction:column;gap:20px}
+ .about-left{display:contents}
+ .about-left>.section-label{order:0;margin-bottom:7px}
+ .about-right{order:1}
+ .about-photo{order:2;height:clamp(420px,130vw,580px);width:100%;margin:10px 0 0}
+ .about-photo figcaption{left:17px;bottom:18px;font-size:10px}
+ .about-right p{line-height:1.68}
+ .timeline>div{padding:13px 0}
+ .home-bio-layout{grid-template-columns:1fr;gap:25px}
+ .home-bio h2{font-size:clamp(37px,10.5vw,53px)}
+ .home-bio p{font-size:14px;line-height:1.7}
+ .home-bio-photo{height:220px}
+ .home-bio-photo img{object-position:50% 32%}
+ .home-explore-links{grid-template-columns:1fr}
+ .home-explore-links a{padding-block:18px;gap:13px}
+ .home-explore-links strong{font-size:26px}
+ .home-explore-links small{font-size:11px}
+ .home-explore h2{font-size:clamp(35px,9vw,51px)}
+ body[data-page=index] .hero{min-height:0}
+ body[data-page=sobre] .about,body[data-page=especialidades] .specialties,body[data-page=convenios] .insurances,body[data-page=avaliacoes] .reviews,body[data-page=contato] .location{padding-top:30px}
+ .specialties-header{margin-bottom:25px}
+ .gallery{padding-bottom:50px}
+ .closing{padding:48px 0 65px}
+ .reviews{padding-bottom:70px}
+ .insurance-grid{gap:8px}
+ .map-frame{height:265px}
+}
+@media(prefers-reduced-motion:reduce){.about-photo>img{transition:none}.home-bio-photo img{transition:none}}
