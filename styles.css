@@ -253,8 +253,8 @@ body[data-page=contato] .location-heading{margin-bottom:34px}
  .about-grid{display:flex;flex-direction:column;gap:20px}
  .about-left{display:contents}
  .about-left>.section-label{order:0;margin-bottom:7px}
- .about-right{order:1}
- .about-photo{order:2;height:clamp(420px,130vw,580px);width:100%;margin:10px 0 0}
+ .about-right{order:2}
+ .about-photo{order:1;height:clamp(420px,130vw,580px);width:100%;margin:10px 0 0}
  .about-photo figcaption{left:17px;bottom:18px;font-size:10px}
  .about-right p{line-height:1.68}
  .timeline>div{padding:13px 0}
