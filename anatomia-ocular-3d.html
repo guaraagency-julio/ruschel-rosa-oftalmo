@@ -270,6 +270,14 @@
       }
     }
 
+    /* Zoom acessível: botões complementam o gesto de pinça em dispositivos móveis. */
+    .grr-zoom-controls { display: inline-flex; align-items: center; gap: 3px; border: 1px solid rgba(188,204,220,.85); background: rgba(255,255,255,.88); border-radius: 999px; padding: 3px; white-space: nowrap; }
+    .grr-zoom-btn { display: inline-grid; place-items: center; width: 32px; height: 32px; border: 0; background: transparent; border-radius: 50%; color: #13273A; cursor: pointer; font-size: 19px; line-height: 1; }
+    .grr-zoom-btn:hover:not(:disabled), .grr-zoom-btn:focus-visible { background: #EBF3FA; }
+    .grr-zoom-btn:disabled { opacity: .3; cursor: default; }
+    .grr-zoom-reset { min-width: 53px; border: 0; padding: 5px 3px; color: #334E68; font-size: 11px; font-weight: 600; background: transparent; cursor: pointer; }
+    @media (max-width: 640px) { .grr-zoom-controls { margin: 5px 0 0; } }
+
     /* Painel clínico lateral (Desktop) / inferior adaptativo (Smartphone/Tablet) */
     .grr-clinical-panel {
       position: relative;
@@ -384,6 +392,11 @@
             <div id="grr-interaction-hint" class="text-xs text-clinical-500 flex items-center gap-3">
               <span class="hidden sm:inline">Rastreamento global ativo • Clique no olho para piscar</span>
               <span class="sm:hidden">Toque ou arraste para orientar • Toque no olho para piscar</span>
+            </div>
+            <div id="grr-zoom-controls" class="grr-zoom-controls" role="group" aria-label="Controles de zoom da visualização 3D">
+              <button id="grr-zoom-out" class="grr-zoom-btn" type="button" aria-label="Afastar visão 3D" title="Afastar">−</button>
+              <button id="grr-zoom-reset" class="grr-zoom-reset" type="button" aria-label="Restaurar zoom padrão" title="Restaurar zoom">100%</button>
+              <button id="grr-zoom-in" class="grr-zoom-btn" type="button" aria-label="Aproximar visão 3D" title="Aproximar">+</button>
             </div>
           </div>
 
@@ -999,6 +1012,13 @@
           this.modeLabel = options.modeLabel;
           this.interactionHint = options.interactionHint;
           this.footerCaption = options.footerCaption;
+          this.zoomOutBtn = options.zoomOutBtn;
+          this.zoomInBtn = options.zoomInBtn;
+          this.zoomResetBtn = options.zoomResetBtn;
+          this.zoomFactor = 1;
+          this.minZoom = 0.60;
+          this.maxZoom = 2.35;
+          this.suppressClickUntil = 0;
 
           // Estados principais: 'complete' | 'expanding' | 'expanded' | 'collapsing'
           this.mode = 'complete';
@@ -1041,7 +1061,10 @@
             lastX: 0,
             lastY: 0,
             moved: false,
-            isScrollingPage: false
+            isScrollingPage: false,
+            pinchActive: false,
+            pinchStartDistance: 0,
+            pinchStartZoom: 1
           };
 
           // Estado da animação de piscar (250ms a 400ms)
@@ -2263,6 +2286,7 @@
           const now = performance.now();
           this.transitionStartTime = now;
           this.transitionDuration = this.prefersReducedMotion ? 120 : 1550;
+          this.setZoomFactor(1);
 
           if (this.mode === 'complete') {
             this.mode = 'expanding';
@@ -2354,7 +2378,7 @@
           const bottomTier0Y = isMobile ? height * 0.90 : isTablet ? height * 0.88 : height * 0.87;
           const bottomTier1Y = isMobile ? height * 0.79 : isTablet ? height * 0.79 : height * 0.78;
 
-          const safeMargin = isMobile ? 36 : 52;
+          const safeMargin = isMobile ? 10 : 52;
           const worldVec = new THREE.Vector3();
           const projectedItems = [];
 
@@ -2381,7 +2405,9 @@
               labelY = spec.tier === 0 ? bottomTier0Y : bottomTier1Y;
             }
 
-            const labelX = Math.max(safeMargin, Math.min(width - safeMargin, anchorX));
+            const labelHalfWidth = domRefs.label.getBoundingClientRect().width / 2;
+            const edgeMargin = Math.max(safeMargin, labelHalfWidth + 5);
+            const labelX = Math.max(edgeMargin, Math.min(width - edgeMargin, anchorX));
 
             projectedItems.push({
               spec,
@@ -2394,7 +2420,7 @@
           });
 
           // Garantir espaçamento horizontal mínimo entre rótulos da mesma faixa durante rotações 3D
-          const minGap = isMobile ? 68 : isTablet ? 86 : 102;
+          const minGap = isMobile ? 76 : isTablet ? 86 : 102;
           ['top-0', 'top-1', 'bottom-0', 'bottom-1'].forEach((groupKey) => {
             const [row, tierStr] = groupKey.split('-');
             const tier = parseInt(tierStr, 10);
@@ -2407,8 +2433,10 @@
               const curr = group[i];
               if (curr.labelX - prev.labelX < minGap) {
                 const mid = (curr.labelX + prev.labelX) * 0.5;
-                prev.labelX = Math.max(safeMargin, mid - minGap * 0.5);
-                curr.labelX = Math.min(width - safeMargin, mid + minGap * 0.5);
+                const leftInset = Math.max(safeMargin, prev.domRefs.label.getBoundingClientRect().width / 2 + 5);
+                const rightInset = Math.max(safeMargin, curr.domRefs.label.getBoundingClientRect().width / 2 + 5);
+                prev.labelX = Math.max(leftInset, mid - minGap * 0.5);
+                curr.labelX = Math.min(width - rightInset, mid + minGap * 0.5);
               }
             }
           });
@@ -2490,6 +2518,23 @@
           return first.structureId;
         }
 
+        /** Zoom ótico aplicado à câmera sem interferir na separação anatômica. */
+        setZoomFactor(next) {
+          if (!this.camera) return;
+          this.zoomFactor = THREE.MathUtils.clamp(next, this.minZoom, this.maxZoom);
+          this.camera.zoom = this.zoomFactor;
+          this.camera.updateProjectionMatrix();
+          if (this.zoomOutBtn) this.zoomOutBtn.disabled = this.zoomFactor <= this.minZoom + 0.001;
+          if (this.zoomInBtn) this.zoomInBtn.disabled = this.zoomFactor >= this.maxZoom - 0.001;
+          if (this.zoomResetBtn) this.zoomResetBtn.textContent = Math.round(this.zoomFactor * 100) + '%';
+          if (this.mode === 'expanded' || this.mode === 'expanding') this.updateAnnotationPositions();
+          this.renderFrame();
+        }
+
+        getTouchDistance(touches) {
+          return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+        }
+
         updateResponsiveLayout() {
           if (!this.stageEl || !this.renderer || !this.camera) return;
 
@@ -2503,9 +2548,13 @@
 
           if (width < 640) {
             this.completeCameraZ = Math.max(6.4, 4.8 / Math.max(aspect, 0.55));
-            this.expandedCameraZ = Math.max(11.0, 9.1 / Math.max(aspect, 0.55));
             this.currentSpreadMultiplier = 0.78;
             this.masterGroup.scale.setScalar(0.92);
+            // Ajuste pelo campo de visão horizontal real da PerspectiveCamera.
+            // Reserva margem para a córnea, o nervo óptico e a rotação do conjunto.
+            const halfWidth = (4.52 * this.currentSpreadMultiplier + 0.75) * 0.92;
+            const halfFov = THREE.MathUtils.degToRad(this.camera.fov / 2);
+            this.expandedCameraZ = Math.max(19.5, halfWidth / (Math.tan(halfFov) * aspect * 0.75));
           } else if (width < 1024) {
             this.completeCameraZ = 5.9;
             this.expandedCameraZ = Math.max(9.4, 10.8 / Math.max(aspect, 0.8));
@@ -2519,6 +2568,7 @@
           }
 
           this.applyExpansionState(this.expansionProgress);
+          this.setZoomFactor(this.zoomFactor);
           if (this.mode === 'expanded' || this.mode === 'expanding') {
             this.updateAnnotationPositions();
           }
@@ -2551,6 +2601,16 @@
           // 2. Comportamento equivalente viável em Smartphones (Toque no modelo vs Toque global fora do componente)
           this.onStageTouchStart = (e) => {
             if (!e.touches || e.touches.length === 0) return;
+            if (e.touches.length >= 2) {
+              this.touchState.pinchActive = true;
+              this.touchState.pinchStartDistance = this.getTouchDistance(e.touches);
+              this.touchState.pinchStartZoom = this.zoomFactor;
+              this.touchState.moved = true;
+              this.touchState.activeOnStage = false;
+              this.suppressClickUntil = performance.now() + 500;
+              return;
+            }
+            if (this.touchState.pinchActive) return;
             const touch = e.touches[0];
             this.touchState.activeOnStage = true;
             this.touchState.startX = touch.clientX;
@@ -2565,7 +2625,23 @@
           };
 
           this.onStageTouchMove = (e) => {
-            if (!this.touchState.activeOnStage || !e.touches || e.touches.length === 0) return;
+            if (!e.touches || e.touches.length === 0) return;
+            if (e.touches.length >= 2) {
+              if (!this.touchState.pinchActive) {
+                this.touchState.pinchActive = true;
+                this.touchState.pinchStartDistance = this.getTouchDistance(e.touches);
+                this.touchState.pinchStartZoom = this.zoomFactor;
+              }
+              // Apenas a pinça de dois dedos é interceptada; rolagem com um dedo continua nativa.
+              if (e.cancelable) e.preventDefault();
+              this.touchState.moved = true;
+              this.touchState.activeOnStage = false;
+              this.suppressClickUntil = performance.now() + 500;
+              const ratio = this.getTouchDistance(e.touches) / Math.max(1, this.touchState.pinchStartDistance);
+              this.setZoomFactor(this.touchState.pinchStartZoom * ratio);
+              return;
+            }
+            if (this.touchState.pinchActive || !this.touchState.activeOnStage) return;
             const touch = e.touches[0];
             const dx = touch.clientX - this.touchState.startX;
             const dy = touch.clientY - this.touchState.startY;
@@ -2585,7 +2661,12 @@
             }
           };
 
-          this.onStageTouchEnd = () => {
+          this.onStageTouchEnd = (e) => {
+            if (this.touchState.pinchActive) {
+              this.touchState.moved = true;
+              this.suppressClickUntil = performance.now() + 500;
+            }
+            if (!e.touches || e.touches.length < 2) this.touchState.pinchActive = false;
             this.touchState.activeOnStage = false;
             this.touchState.isScrollingPage = false;
           };
@@ -2611,6 +2692,7 @@
 
           // 3. Clique no Canvas: Piscar (Modo Completo) ou Selecionar Estrutura 3D (Modo Expandido)
           this.onCanvasClick = (e) => {
+            if (performance.now() < this.suppressClickUntil) return;
             if (this.touchState.moved) {
               this.touchState.moved = false;
               return;
@@ -2677,6 +2759,9 @@
           this.onWindowResize = () => {
             this.updateResponsiveLayout();
           };
+          this.onZoomOutClick = () => this.setZoomFactor(this.zoomFactor / 1.25);
+          this.onZoomInClick = () => this.setZoomFactor(this.zoomFactor * 1.25);
+          this.onZoomResetClick = () => this.setZoomFactor(1);
 
           // Registrar listeners globais e locais sem duplicação
           window.addEventListener('pointermove', this.onGlobalPointerMove, { passive: true });
@@ -2689,7 +2774,7 @@
           window.addEventListener('resize', this.onWindowResize);
 
           this.stageEl.addEventListener('touchstart', this.onStageTouchStart, { passive: true });
-          this.stageEl.addEventListener('touchmove', this.onStageTouchMove, { passive: true });
+          this.stageEl.addEventListener('touchmove', this.onStageTouchMove, { passive: false });
           this.stageEl.addEventListener('touchend', this.onStageTouchEnd, { passive: true });
 
           this.canvasEl.addEventListener('click', this.onCanvasClick);
@@ -2699,6 +2784,9 @@
           this.closeClinicalBtn.addEventListener('click', this.onCloseClinicalClick);
           this.prevStructureBtn.addEventListener('click', this.onPrevStructureClick);
           this.nextStructureBtn.addEventListener('click', this.onNextStructureClick);
+          this.zoomOutBtn.addEventListener('click', this.onZoomOutClick);
+          this.zoomInBtn.addEventListener('click', this.onZoomInClick);
+          this.zoomResetBtn.addEventListener('click', this.onZoomResetClick);
 
           // 5. IntersectionObserver: pausa renderização fora da viewport mantendo a posição-alvo atualizada
           if ('IntersectionObserver' in window) {
@@ -2949,6 +3037,9 @@
           this.closeClinicalBtn.removeEventListener('click', this.onCloseClinicalClick);
           this.prevStructureBtn.removeEventListener('click', this.onPrevStructureClick);
           this.nextStructureBtn.removeEventListener('click', this.onNextStructureClick);
+          this.zoomOutBtn.removeEventListener('click', this.onZoomOutClick);
+          this.zoomInBtn.removeEventListener('click', this.onZoomInClick);
+          this.zoomResetBtn.removeEventListener('click', this.onZoomResetClick);
 
           this.geometries.forEach((g) => g.dispose && g.dispose());
           this.materials.forEach((m) => m.dispose && m.dispose());
@@ -2988,7 +3079,10 @@
           modeIndicator: document.getElementById('grr-mode-indicator'),
           modeLabel: document.getElementById('grr-mode-label'),
           interactionHint: document.getElementById('grr-interaction-hint'),
-          footerCaption: document.getElementById('grr-footer-caption')
+          footerCaption: document.getElementById('grr-footer-caption'),
+          zoomOutBtn: document.getElementById('grr-zoom-out'),
+          zoomInBtn: document.getElementById('grr-zoom-in'),
+          zoomResetBtn: document.getElementById('grr-zoom-reset')
         });
 
         window.GRREyeComponent = eyeComponent;
