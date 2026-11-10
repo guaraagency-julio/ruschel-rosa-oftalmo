@@ -1,0 +1,3020 @@
+<!doctype html><html lang="pt-BR"><head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dr. Guilherme Ruschel Rosa — Oftalmologia | Anatomia Ocular 3D</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+          },
+          colors: {
+            clinical: {
+              50: '#F7F9FB',
+              100: '#EDF2F7',
+              200: '#DCE5EF',
+              300: '#BCCCDC',
+              500: '#4A6B88',
+              700: '#1E3A54',
+              800: '#13273A',
+              900: '#0B1826',
+            },
+            accent: {
+              blue: '#1E6BB8',
+              light: '#EBF3FA',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: #F7F9FB;
+      color: #0B1826;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Estilos isolados e modulares do Componente 3D (escopo .grr-eye-widget) */
+    .grr-eye-widget {
+      position: relative;
+      width: 100%;
+      border-radius: 1.5rem;
+      background:
+        radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.98) 0%, rgba(238, 244, 250, 0.94) 56%, rgba(225, 234, 244, 0.9) 100%);
+      box-shadow:
+        0 24px 60px -15px rgba(11, 24, 38, 0.08),
+        0 4px 16px -2px rgba(11, 24, 38, 0.04),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(188, 204, 220, 0.55);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Layout interno responsivo para acomodar o palco 3D e o painel clínico lateral */
+    .grr-eye-body {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    @media (min-width: 1024px) {
+      .grr-eye-body {
+        flex-direction: row;
+        align-items: stretch;
+      }
+    }
+
+    .grr-eye-stage {
+      position: relative;
+      flex: 1 1 auto;
+      width: 100%;
+      height: 560px;
+      z-index: 2;
+      transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Superfície sutil de bancada clínica inspirada na referência anatômica */
+    .grr-eye-stage::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 26%;
+      background: linear-gradient(180deg, rgba(226, 235, 244, 0) 0%, rgba(213, 224, 236, 0.42) 45%, rgba(202, 215, 230, 0.65) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @media (max-width: 1024px) {
+      .grr-eye-stage {
+        height: 500px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .grr-eye-stage {
+        height: 440px;
+      }
+    }
+
+    .grr-eye-canvas {
+      position: relative;
+      z-index: 2;
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      touch-action: pan-y;
+    }
+
+    .grr-eye-canvas.is-clickable {
+      cursor: pointer;
+    }
+
+    /* Camada de linhas-guia e rótulos anatômicos */
+    .grr-eye-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.42s;
+    }
+
+    .grr-eye-overlay.is-visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .grr-eye-svg-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .grr-leader-line {
+      stroke: #334E68;
+      stroke-width: 1.2;
+      fill: none;
+      opacity: 0.72;
+      transition: stroke 0.22s ease, stroke-width 0.22s ease, opacity 0.22s ease;
+    }
+
+    .grr-leader-line.is-selected {
+      stroke: #1E6BB8;
+      stroke-width: 2.1;
+      opacity: 1;
+    }
+
+    .grr-leader-line.is-dimmed {
+      opacity: 0.32;
+    }
+
+    .grr-leader-dot {
+      fill: #1E3A54;
+      stroke: #FFFFFF;
+      stroke-width: 1.5;
+      transition: fill 0.22s ease, r 0.22s ease;
+    }
+
+    .grr-leader-dot.is-selected {
+      fill: #1E6BB8;
+      stroke: #FFFFFF;
+      stroke-width: 2;
+    }
+
+    .grr-leader-dot.is-dimmed {
+      opacity: 0.4;
+    }
+
+    /* Rótulos interativos clicáveis em Português Brasileiro */
+    .grr-label-item {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(188, 204, 220, 0.9);
+      color: #0B1826;
+      padding: 0.32rem 0.68rem;
+      border-radius: 0.5rem;
+      font-size: 0.76rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(11, 24, 38, 0.07);
+      line-height: 1.2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .grr-label-item::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 9999px;
+      background-color: #4A6B88;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .grr-label-item:hover {
+      background: #FFFFFF;
+      border-color: #1E6BB8;
+      color: #13273A;
+      box-shadow: 0 6px 16px rgba(30, 107, 184, 0.16);
+      transform: translate(-50%, calc(-50% - 1px));
+      z-index: 20;
+    }
+
+    .grr-label-item:focus-visible {
+      outline: 2px solid #1E6BB8;
+      outline-offset: 2px;
+      z-index: 25;
+    }
+
+    .grr-label-item.is-selected {
+      background: #13273A;
+      color: #FFFFFF;
+      border-color: #13273A;
+      box-shadow: 0 8px 20px rgba(19, 39, 58, 0.26);
+      z-index: 22;
+    }
+
+    .grr-label-item.is-selected::before {
+      background-color: #60B5FF;
+      transform: scale(1.25);
+    }
+
+    @media (max-width: 768px) {
+      .grr-label-item {
+        font-size: 0.68rem;
+        padding: 0.24rem 0.48rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .grr-label-item {
+        font-size: 0.62rem;
+        padding: 0.18rem 0.38rem;
+        border-radius: 0.38rem;
+        gap: 0.22rem;
+      }
+      .grr-label-item::before {
+        width: 4px;
+        height: 4px;
+      }
+    }
+
+    /* Painel clínico lateral (Desktop) / inferior adaptativo (Smartphone/Tablet) */
+    .grr-clinical-panel {
+      position: relative;
+      z-index: 25;
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(188, 204, 220, 0.7);
+      transition: all 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @media (min-width: 1024px) {
+      .grr-clinical-panel {
+        width: 400px;
+        flex: 0 0 400px;
+        border-top: none;
+        border-left: 1px solid rgba(188, 204, 220, 0.7);
+        max-height: 560px;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+
+    /* Botão principal de ação */
+    .grr-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.625rem;
+      min-height: 2.85rem;
+      padding: 0.7rem 1.5rem;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: #FFFFFF;
+      background: linear-gradient(135deg, #13273A 0%, #1E3A54 100%);
+      box-shadow: 0 10px 24px -6px rgba(19, 39, 58, 0.35), 0 2px 6px rgba(19, 39, 58, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+      cursor: pointer;
+    }
+
+    .grr-action-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background: linear-gradient(135deg, #18324B 0%, #254766 100%);
+      box-shadow: 0 14px 28px -6px rgba(19, 39, 58, 0.42), 0 4px 10px rgba(19, 39, 58, 0.18);
+    }
+
+    .grr-action-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .grr-action-btn:disabled {
+      opacity: 0.68;
+      cursor: wait;
+    }
+
+    /* Botão secundário (Fixar visualização / Retomar movimento) */
+    .grr-secondary-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      min-height: 2.85rem;
+      padding: 0.68rem 1.25rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #13273A;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(188, 204, 220, 0.95);
+      box-shadow: 0 4px 12px rgba(11, 24, 38, 0.06);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .grr-secondary-btn:hover:not(:disabled) {
+      background: #FFFFFF;
+      border-color: #4A6B88;
+      box-shadow: 0 6px 16px rgba(11, 24, 38, 0.1);
+    }
+
+    .grr-secondary-btn.is-paused {
+      background: #EBF3FA;
+      border-color: #1E6BB8;
+      color: #1E3A54;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .grr-eye-overlay,
+      .grr-label-item,
+      .grr-action-btn,
+      .grr-secondary-btn,
+      .grr-clinical-panel {
+        transition-duration: 0.05s !important;
+      }
+    }
+  </style>
+</head><body class="grr-embed-body"><section id="anatomia-ocular" class="py-4 sm:py-6" aria-label="Componente 3D Interativo do Olho Humano">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Container isolado do componente -->
+        <div id="grr-eye-component-root" class="grr-eye-widget">
+          <!-- Barra superior minimalista de status e instrução -->
+          <div class="relative z-20 flex flex-wrap items-center justify-between gap-2 px-4 sm:px-7 pt-4 sm:pt-5 pb-2 border-b border-clinical-200/40 bg-white/35 backdrop-blur-xs">
+            <div class="flex items-center gap-2.5">
+              <span id="grr-mode-indicator" class="w-2 h-2 rounded-full bg-emerald-600 transition-colors"></span>
+              <span id="grr-mode-label" class="text-xs sm:text-sm font-medium text-clinical-800 tracking-tight">
+                Modo Interativo — Globo Ocular Completo
+              </span>
+            </div>
+            <div id="grr-interaction-hint" class="text-xs text-clinical-500 flex items-center gap-3">
+              <span class="hidden sm:inline">Rastreamento global ativo • Clique no olho para piscar</span>
+              <span class="sm:hidden">Toque ou arraste para orientar • Toque no olho para piscar</span>
+            </div>
+          </div>
+
+          <!-- Corpo principal: Palco 3D + Painel Clínico Lateral/Inferior -->
+          <div class="grr-eye-body">
+            <!-- Palco 3D + Overlay de Rótulos Anatômicos -->
+            <div id="grr-eye-stage" class="grr-eye-stage" role="region" aria-label="Visualização 3D do Olho Humano">
+              <canvas id="grr-eye-canvas" class="grr-eye-canvas is-clickable" tabindex="0" aria-label="Globo ocular 3D interativo. Pressione Enter ou clique para piscar no modo completo, ou selecione estruturas no modo expandido."></canvas>
+
+              <!-- Camada SVG + Rótulos em Português Brasileiro (visível no Modo Expandido) -->
+              <div id="grr-eye-overlay" class="grr-eye-overlay" aria-hidden="true">
+                <svg id="grr-eye-svg-lines" class="grr-eye-svg-lines" xmlns="http://www.w3.org/2000/svg"></svg>
+                <div id="grr-eye-labels-container" class="absolute inset-0 pointer-events-none"></div>
+              </div>
+
+              <!-- Fallback estático caso WebGL não esteja disponível -->
+              <div id="grr-webgl-fallback" class="hidden absolute inset-0 bg-clinical-50 flex-col items-center justify-center p-6 text-center z-30">
+                <p class="text-sm font-medium text-clinical-800 mb-3">
+                  Visualização estática de alta definição (WebGL indisponível neste dispositivo)
+                </p>
+                <svg class="w-full max-w-2xl h-64" viewBox="0 0 800 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama anatômico do olho humano">
+                  <ellipse cx="110" cy="160" rx="28" ry="72" fill="#E6F2FA" fill-opacity="0.7" stroke="#334E68" stroke-width="1.5"/>
+                  <ellipse cx="185" cy="160" rx="22" ry="70" fill="#1E6BB8" stroke="#0B1826" stroke-width="1.5"/>
+                  <ellipse cx="185" cy="160" rx="8" ry="26" fill="#080D14"/>
+                  <ellipse cx="255" cy="160" rx="18" ry="50" fill="#F0F7FC" stroke="#4A6B88" stroke-width="1.5"/>
+                  <ellipse cx="330" cy="160" rx="26" ry="82" fill="none" stroke="#B85D4B" stroke-width="10"/>
+                  <circle cx="445" cy="160" r="78" fill="#EBF3FA" fill-opacity="0.65" stroke="#9FB3C8" stroke-width="1.5"/>
+                  <path d="M540 86 A80 80 0 0 1 540 234" stroke="#E68A45" stroke-width="8" fill="none"/>
+                  <path d="M585 82 A86 86 0 0 1 585 238" stroke="#7A2E2E" stroke-width="9" fill="none"/>
+                  <path d="M635 78 A92 92 0 0 1 635 242" stroke="#F4EFEA" stroke-width="12" fill="none"/>
+                  <rect x="695" y="146" width="48" height="28" rx="6" fill="#D9B872" stroke="#8C6D32" stroke-width="1.5"/>
+                  <g fill="#0B1826" font-family="Inter, sans-serif" font-size="12" font-weight="500" text-anchor="middle">
+                    <text x="110" y="55">Córnea</text>
+                    <text x="185" y="275">Íris e pupila</text>
+                    <text x="255" y="55">Cristalino</text>
+                    <text x="330" y="275">Corpo ciliar</text>
+                    <text x="445" y="55">Humor vítreo</text>
+                    <text x="550" y="275">Retina</text>
+                    <text x="600" y="55">Coroide</text>
+                    <text x="660" y="275">Esclera</text>
+                    <text x="725" y="55">Nervo óptico</text>
+                  </g>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Painel Clínico Educativo (abre ao selecionar qualquer estrutura no modo expandido) -->
+            <aside
+              id="grr-clinical-panel"
+              class="grr-clinical-panel hidden"
+              role="region"
+              aria-live="polite"
+              aria-label="Informações clínicas da estrutura anatômica selecionada"
+            >
+              <!-- Cabeçalho do Painel -->
+              <div class="px-5 pt-5 pb-3.5 border-b border-clinical-200/70 flex items-start justify-between gap-3">
+                <div>
+                  <span id="grr-clinical-step-badge" class="inline-block text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-blue bg-accent-light px-2.5 py-0.5 rounded-full mb-1.5">
+                    Anatomia Clínica
+                  </span>
+                  <h3 id="grr-clinical-title" class="font-serif text-2xl font-semibold text-clinical-900 leading-tight">
+                    Córnea
+                  </h3>
+                  <p id="grr-clinical-description" class="text-xs text-clinical-700 mt-1 leading-relaxed">
+                    Camada transparente anterior do olho, importante para proteção e focalização da luz.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  id="grr-close-clinical-btn"
+                  class="p-2 rounded-full text-clinical-500 hover:text-clinical-900 hover:bg-clinical-100 transition-colors focus:outline-none focus:ring-2 focus:ring-accent-blue"
+                  aria-label="Fechar painel de informações clínicas"
+                  title="Fechar painel"
+                >
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Lista das 5 Condições Clínicas Relevantes -->
+              <div class="px-5 py-3.5 overflow-y-auto flex-1 space-y-2.5 max-h-[340px] lg:max-h-none">
+                <div class="text-[11px] font-medium text-clinical-500 uppercase tracking-wider">
+                  Cinco condições, alterações ou manifestações associadas
+                </div>
+                <ol id="grr-clinical-list" class="space-y-2.5 text-xs">
+                  <!-- Preenchido dinamicamente pelo componente -->
+                </ol>
+              </div>
+
+              <!-- Rodapé do Painel: Navegação Rápida + Observação Editorial Obrigatória -->
+              <div class="px-5 py-3 bg-clinical-50/90 border-t border-clinical-200/70">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <button
+                    type="button"
+                    id="grr-prev-structure-btn"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-clinical-700 hover:text-clinical-900 hover:bg-clinical-200/60 transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    Anterior
+                  </button>
+                  <span id="grr-clinical-counter" class="text-[11px] font-medium text-clinical-500">
+                    1 de 9
+                  </span>
+                  <button
+                    type="button"
+                    id="grr-next-structure-btn"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-clinical-700 hover:text-clinical-900 hover:bg-clinical-200/60 transition-colors"
+                  >
+                    Próxima
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+                <p class="text-[11px] text-clinical-500 leading-snug">
+                  Conteúdo educativo. A avaliação oftalmológica é necessária para diagnóstico e orientação individualizada.
+                </p>
+              </div>
+            </aside>
+          </div>
+
+          <!-- Barra inferior com os botões de controle -->
+          <div class="relative z-20 px-4 sm:px-7 pb-5 sm:pb-6 pt-3 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-clinical-200/50 bg-white/55 backdrop-blur-xs">
+            <div class="text-xs text-clinical-700/85 text-center sm:text-left">
+              <span id="grr-footer-caption">
+                Representação anatômica tridimensional em tempo real • Proporções didáticas controladas
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <!-- Botão exclusivo do Modo Expandido: Fixar visualização / Retomar movimento -->
+              <button
+                type="button"
+                id="grr-pause-rotation-btn"
+                class="grr-secondary-btn hidden"
+                aria-pressed="false"
+              >
+                <!-- Ícone Pausar / Fixar -->
+                <svg id="grr-icon-pause" class="w-4 h-4 text-clinical-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+                  <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+                </svg>
+                <!-- Ícone Retomar / Play -->
+                <svg id="grr-icon-resume" class="w-4 h-4 text-accent-blue hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span id="grr-pause-rotation-text">Fixar visualização</span>
+              </button>
+
+              <!-- Botão Principal: Explorar anatomia do olho / Reconstruir olho -->
+              <button
+                type="button"
+                id="grr-toggle-anatomy-btn"
+                class="grr-action-btn"
+                aria-expanded="false"
+                aria-controls="grr-eye-stage"
+              >
+                <svg id="grr-btn-icon-expand" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+                <svg id="grr-btn-icon-collapse" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="4 14 10 14 10 20"></polyline>
+                  <polyline points="20 10 14 10 14 4"></polyline>
+                  <line x1="14" y1="10" x2="21" y2="3"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+                <span id="grr-toggle-anatomy-text">Explorar anatomia do olho</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section><script>
+    /**
+     * COMPONENTE 3D INTERATIVO — OLHO HUMANO (VERSÃO ATUALIZADA)
+     * Projeto: Dr. Guilherme Ruschel Rosa — Oftalmologia
+     * Preserva toda a modelagem, texturas, materiais, iluminação e animações originais,
+     * adicionando rastreamento global do cursor, anatomia expandida interativa em 3D,
+     * controle de pausa/retomada de rotação e painel clínico educativo por estrutura.
+     */
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. GERADORES DE TEXTURAS PROCEDURAIS DE ALTA FIDELIDADE (INTACTOS)
+      // =========================================================================
+      const ProceduralTextures = {
+        createStudioEnvMap() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+
+          const bgGrad = ctx.createLinearGradient(0, 0, 0, 256);
+          bgGrad.addColorStop(0.0, '#D9E4F0');
+          bgGrad.addColorStop(0.45, '#F2F6FA');
+          bgGrad.addColorStop(0.55, '#DDE6F0');
+          bgGrad.addColorStop(1.0, '#B8C7D8');
+          ctx.fillStyle = bgGrad;
+          ctx.fillRect(0, 0, 512, 256);
+
+          const softbox1 = ctx.createRadialGradient(195, 72, 6, 195, 72, 68);
+          softbox1.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+          softbox1.addColorStop(0.45, 'rgba(255, 255, 255, 0.85)');
+          softbox1.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+          ctx.fillStyle = softbox1;
+          ctx.fillRect(110, 0, 180, 160);
+
+          const softbox2 = ctx.createRadialGradient(340, 118, 4, 340, 118, 46);
+          softbox2.addColorStop(0.0, 'rgba(255, 255, 255, 0.92)');
+          softbox2.addColorStop(0.5, 'rgba(240, 248, 255, 0.45)');
+          softbox2.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+          ctx.fillStyle = softbox2;
+          ctx.fillRect(280, 60, 120, 120);
+
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.mapping = THREE.EquirectangularReflectionMapping;
+          texture.needsUpdate = true;
+          return texture;
+        },
+
+        createScleraTextures() {
+          const width = 1024;
+          const height = 512;
+          const colorCanvas = document.createElement('canvas');
+          colorCanvas.width = width;
+          colorCanvas.height = height;
+          const ctx = colorCanvas.getContext('2d');
+
+          const bumpCanvas = document.createElement('canvas');
+          bumpCanvas.width = width;
+          bumpCanvas.height = height;
+          const bCtx = bumpCanvas.getContext('2d');
+
+          const baseGrad = ctx.createLinearGradient(0, 0, 0, height);
+          baseGrad.addColorStop(0.0, '#FBF7F4');
+          baseGrad.addColorStop(0.24, '#F8F0EB');
+          baseGrad.addColorStop(0.48, '#F1DFD6');
+          baseGrad.addColorStop(0.78, '#E5C6B8');
+          baseGrad.addColorStop(1.0, '#DDB8A9');
+          ctx.fillStyle = baseGrad;
+          ctx.fillRect(0, 0, width, height);
+
+          bCtx.fillStyle = '#808080';
+          bCtx.fillRect(0, 0, width, height);
+
+          let seed = 42;
+          const rand = () => {
+            seed = (seed * 16807) % 2147483647;
+            return (seed - 1) / 2147483646;
+          };
+
+          for (let i = 0; i < 90; i++) {
+            const x = rand() * width;
+            const y = (0.22 + rand() * 0.75) * height;
+            const r = 18 + rand() * 55;
+            const g = ctx.createRadialGradient(x, y, 2, x, y, r);
+            const alpha = 0.025 + rand() * 0.035;
+            g.addColorStop(0, `rgba(214, 152, 138, ${alpha})`);
+            g.addColorStop(1, 'rgba(214, 152, 138, 0)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          const drawVesselBranch = (x, y, angle, length, thickness, depth, alpha) => {
+            if (depth <= 0 || thickness < 0.25 || y < height * 0.16) return;
+
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            bCtx.beginPath();
+            bCtx.moveTo(x, y);
+
+            let cx = x;
+            let cy = y;
+            let curAngle = angle;
+            const steps = 10;
+            const stepLen = length / steps;
+
+            for (let s = 0; s < steps; s++) {
+              curAngle += (rand() - 0.5) * 0.42;
+              cx += Math.cos(curAngle) * stepLen;
+              cy += Math.sin(curAngle) * stepLen;
+              ctx.lineTo(cx, cy);
+              bCtx.lineTo(cx, cy);
+            }
+
+            ctx.strokeStyle = `rgba(178, 82, 74, ${alpha})`;
+            ctx.lineWidth = thickness;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            bCtx.strokeStyle = `rgba(165, 165, 165, ${alpha * 0.9})`;
+            bCtx.lineWidth = thickness * 1.3;
+            bCtx.lineCap = 'round';
+            bCtx.stroke();
+
+            const subBranches = rand() > 0.35 ? 2 : 1;
+            for (let b = 0; b < subBranches; b++) {
+              const branchAngle = curAngle + (rand() - 0.5) * 0.85;
+              drawVesselBranch(
+                cx,
+                cy,
+                branchAngle,
+                length * (0.68 + rand() * 0.18),
+                thickness * 0.68,
+                depth - 1,
+                alpha * 0.84
+              );
+            }
+          };
+
+          for (let v = 0; v < 28; v++) {
+            const startX = (v / 28) * width + (rand() - 0.5) * 25;
+            const startY = height * (0.52 + rand() * 0.35);
+            const angle = -Math.PI / 2 + (rand() - 0.5) * 0.7;
+            drawVesselBranch(startX, startY, angle, 58 + rand() * 35, 1.5 + rand() * 0.9, 4, 0.22 + rand() * 0.12);
+          }
+
+          const limbusGrad = ctx.createLinearGradient(0, height * 0.14, 0, height * 0.23);
+          limbusGrad.addColorStop(0.0, 'rgba(20, 32, 48, 0.45)');
+          limbusGrad.addColorStop(0.45, 'rgba(45, 65, 85, 0.12)');
+          limbusGrad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+          ctx.fillStyle = limbusGrad;
+          ctx.fillRect(0, height * 0.14, width, height * 0.1);
+
+          const colorTex = new THREE.CanvasTexture(colorCanvas);          const bumpTex = new THREE.CanvasTexture(bumpCanvas);
+          colorTex.needsUpdate = true;
+          bumpTex.needsUpdate = true;
+          return { colorTex, bumpTex };
+        },
+
+        createIrisTextures() {
+          const size = 1024;
+          const colorCanvas = document.createElement('canvas');
+          colorCanvas.width = size;
+          colorCanvas.height = size;
+          const ctx = colorCanvas.getContext('2d');
+
+          const bumpCanvas = document.createElement('canvas');
+          bumpCanvas.width = size;
+          bumpCanvas.height = size;
+          const bCtx = bumpCanvas.getContext('2d');
+
+          const cx = size / 2;
+          const cy = size / 2;
+          const maxR = size * 0.49;
+          const pupilR = size * 0.185;
+
+          ctx.fillStyle = '#041222';
+          ctx.fillRect(0, 0, size, size);
+          bCtx.fillStyle = '#505050';
+          bCtx.fillRect(0, 0, size, size);
+
+          const baseGrad = ctx.createRadialGradient(cx, cy, pupilR * 0.95, cx, cy, maxR);
+          baseGrad.addColorStop(0.0, '#050911');
+          baseGrad.addColorStop(0.07, '#09284B');
+          baseGrad.addColorStop(0.24, '#0080D6');
+          baseGrad.addColorStop(0.42, '#149BF0');
+          baseGrad.addColorStop(0.68, '#0868B5');
+          baseGrad.addColorStop(0.86, '#063B73');
+          baseGrad.addColorStop(0.95, '#041B38');
+          baseGrad.addColorStop(1.0, '#020B18');
+
+          ctx.fillStyle = baseGrad;
+          ctx.beginPath();
+          ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+          ctx.fill();
+
+          let seed = 1337;
+          const rand = () => {
+            seed = (seed * 16807) % 2147483647;
+            return (seed - 1) / 2147483646;
+          };
+
+          const numFibers = 720;
+          for (let i = 0; i < numFibers; i++) {
+            const baseAngle = (i / numFibers) * Math.PI * 2 + (rand() - 0.5) * 0.008;
+            const innerR = pupilR * (1.04 + rand() * 0.18);
+            const outerR = maxR * (0.86 + rand() * 0.1);
+            const midR = (innerR + outerR) * 0.46;
+            const wave = (rand() - 0.5) * 0.035;
+
+            const x1 = cx + Math.cos(baseAngle) * innerR;
+            const y1 = cy + Math.sin(baseAngle) * innerR;
+            const xm = cx + Math.cos(baseAngle + wave) * midR;
+            const ym = cy + Math.sin(baseAngle + wave) * midR;
+            const x2 = cx + Math.cos(baseAngle) * outerR;
+            const y2 = cy + Math.sin(baseAngle) * outerR;
+
+            const isBright = rand() > 0.42;
+            const alpha = 0.08 + rand() * 0.22;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.quadraticCurveTo(xm, ym, x2, y2);
+            ctx.strokeStyle = isBright
+              ? `rgba(88, 206, 255, ${alpha})`
+              : `rgba(3, 32, 68, ${alpha * 1.15})`;
+            ctx.lineWidth = 0.8 + rand() * 2.1;
+            ctx.stroke();
+
+            bCtx.beginPath();
+            bCtx.moveTo(x1, y1);
+            bCtx.quadraticCurveTo(xm, ym, x2, y2);
+            bCtx.strokeStyle = isBright
+              ? `rgba(220, 220, 220, ${alpha * 1.2})`
+              : `rgba(40, 40, 40, ${alpha})`;
+            bCtx.lineWidth = 1.0 + rand() * 2.0;
+            bCtx.stroke();
+          }
+
+          const collaretteR = pupilR * 1.58;
+          for (let i = 0; i < 260; i++) {
+            const a1 = (i / 260) * Math.PI * 2;
+            const a2 = a1 + (rand() - 0.5) * 0.06;
+            const r1 = pupilR * (1.06 + rand() * 0.1);
+            const r2 = collaretteR * (0.92 + rand() * 0.22);
+
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(a1) * r1, cy + Math.sin(a1) * r1);
+            ctx.lineTo(cx + Math.cos(a2) * r2, cy + Math.sin(a2) * r2);
+            ctx.strokeStyle = `rgba(130, 228, 255, ${0.12 + rand() * 0.18})`;
+            ctx.lineWidth = 1.1 + rand() * 1.6;
+            ctx.stroke();
+          }
+
+          const limbalRing = ctx.createRadialGradient(cx, cy, maxR * 0.78, cx, cy, maxR);
+          limbalRing.addColorStop(0.0, 'rgba(2, 12, 26, 0.0)');
+          limbalRing.addColorStop(0.65, 'rgba(3, 16, 34, 0.55)');
+          limbalRing.addColorStop(0.92, 'rgba(1, 7, 16, 0.92)');
+          limbalRing.addColorStop(1.0, 'rgba(1, 5, 12, 1.0)');
+          ctx.fillStyle = limbalRing;
+          ctx.beginPath();
+          ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+          ctx.fill();
+
+          const pupilEdge = ctx.createRadialGradient(cx, cy, pupilR * 0.92, cx, cy, pupilR * 1.14);
+          pupilEdge.addColorStop(0.0, 'rgba(0, 0, 0, 1.0)');
+          pupilEdge.addColorStop(0.45, 'rgba(6, 18, 34, 0.85)');
+          pupilEdge.addColorStop(0.75, 'rgba(180, 225, 250, 0.22)');
+          pupilEdge.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
+          ctx.fillStyle = pupilEdge;
+          ctx.beginPath();
+          ctx.arc(cx, cy, pupilR * 1.15, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#020305';
+          ctx.beginPath();
+          ctx.arc(cx, cy, pupilR * 0.98, 0, Math.PI * 2);
+          ctx.fill();
+
+          const colorTex = new THREE.CanvasTexture(colorCanvas);
+          const bumpTex = new THREE.CanvasTexture(bumpCanvas);
+          colorTex.needsUpdate = true;
+          bumpTex.needsUpdate = true;
+          return { colorTex, bumpTex };
+        },
+
+        createRetinaTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 512;
+          const ctx = canvas.getContext('2d');
+
+          const grad = ctx.createLinearGradient(0, 0, 512, 512);
+          grad.addColorStop(0.0, '#F4A654');
+          grad.addColorStop(0.5, '#E88C38');
+          grad.addColorStop(1.0, '#D47224');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 512, 512);
+
+          let seed = 99;
+          const rand = () => {
+            seed = (seed * 16807) % 2147483647;
+            return (seed - 1) / 2147483646;
+          };
+
+          for (let i = 0; i < 36; i++) {
+            ctx.beginPath();
+            let x = rand() * 512;
+            let y = rand() * 512;
+            ctx.moveTo(x, y);
+            for (let s = 0; s < 6; s++) {
+              x += (rand() - 0.5) * 70;
+              y += (rand() - 0.5) * 70;
+              ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = 'rgba(168, 48, 28, 0.26)';
+            ctx.lineWidth = 1.2 + rand() * 1.4;
+            ctx.stroke();
+          }
+
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.needsUpdate = true;
+          return tex;
+        },
+
+        createChoroidTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 512;
+          const ctx = canvas.getContext('2d');
+
+          const grad = ctx.createLinearGradient(0, 0, 0, 512);
+          grad.addColorStop(0.0, '#853129');
+          grad.addColorStop(0.5, '#6B221C');
+          grad.addColorStop(1.0, '#521814');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 512, 512);
+
+          let seed = 311;
+          const rand = () => {
+            seed = (seed * 16807) % 2147483647;
+            return (seed - 1) / 2147483646;
+          };
+
+          for (let i = 0; i < 95; i++) {
+            ctx.beginPath();
+            const x = rand() * 512;
+            const y = rand() * 512;
+            ctx.moveTo(x, y);
+            ctx.bezierCurveTo(
+              x + (rand() - 0.5) * 90,
+              y + (rand() - 0.5) * 90,
+              x + (rand() - 0.5) * 90,
+              y + (rand() - 0.5) * 90,
+              x + (rand() - 0.5) * 110,
+              y + (rand() - 0.5) * 110
+            );
+            ctx.strokeStyle = i % 2 === 0 ? 'rgba(158, 56, 46, 0.42)' : 'rgba(48, 10, 8, 0.38)';
+            ctx.lineWidth = 1.8 + rand() * 2.4;
+            ctx.stroke();
+          }
+
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.needsUpdate = true;
+          return tex;
+        },
+
+        createCiliaryTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+
+          ctx.fillStyle = '#C97865';
+          ctx.fillRect(0, 0, 512, 256);
+
+          for (let x = 0; x < 512; x += 6) {
+            ctx.fillStyle = x % 12 === 0 ? 'rgba(148, 68, 54, 0.55)' : 'rgba(235, 165, 148, 0.45)';
+            ctx.fillRect(x, 0, 3, 256);
+          }
+
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.wrapS = THREE.RepeatWrapping;
+          tex.wrapT = THREE.RepeatWrapping;
+          tex.needsUpdate = true;
+          return tex;
+        },
+
+        createContactShadowTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+
+          const grad = ctx.createRadialGradient(128, 128, 8, 128, 128, 120);
+          grad.addColorStop(0.0, 'rgba(15, 32, 52, 0.24)');
+          grad.addColorStop(0.45, 'rgba(15, 32, 52, 0.11)');
+          grad.addColorStop(1.0, 'rgba(15, 32, 52, 0.0)');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 256, 256);
+
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.needsUpdate = true;
+          return tex;
+        }
+      };
+
+      // =========================================================================
+      // 2. CLASSE MODULAR DO COMPONENTE 3D DO OLHO HUMANO
+      // =========================================================================
+      class HumanEye3DComponent {
+        constructor(options) {
+          this.stageEl = options.stageEl;
+          this.canvasEl = options.canvasEl;
+          this.overlayEl = options.overlayEl;
+          this.svgLinesEl = options.svgLinesEl;
+          this.labelsContainerEl = options.labelsContainerEl;
+          this.fallbackEl = options.fallbackEl;
+          this.toggleBtn = options.toggleBtn;
+          this.toggleBtnText = options.toggleBtnText;
+          this.iconExpand = options.iconExpand;
+          this.iconCollapse = options.iconCollapse;
+          this.pauseBtn = options.pauseBtn;
+          this.pauseBtnText = options.pauseBtnText;
+          this.iconPause = options.iconPause;
+          this.iconResume = options.iconResume;
+          this.clinicalPanel = options.clinicalPanel;
+          this.clinicalStepBadge = options.clinicalStepBadge;
+          this.clinicalTitle = options.clinicalTitle;
+          this.clinicalDescription = options.clinicalDescription;
+          this.clinicalList = options.clinicalList;
+          this.clinicalCounter = options.clinicalCounter;
+          this.closeClinicalBtn = options.closeClinicalBtn;
+          this.prevStructureBtn = options.prevStructureBtn;
+          this.nextStructureBtn = options.nextStructureBtn;
+          this.modeIndicator = options.modeIndicator;
+          this.modeLabel = options.modeLabel;
+          this.interactionHint = options.interactionHint;
+          this.footerCaption = options.footerCaption;
+
+          // Estados principais: 'complete' | 'expanding' | 'expanded' | 'collapsing'
+          this.mode = 'complete';
+          this.expansionProgress = 0; // 0 = olho completo, 1 = anatomia expandida
+          this.transitionStartTime = 0;
+          this.transitionDuration = 1550; // 1.55s
+
+          // Estado de pausa da rotação (exclusivo para o modo expandido)
+          this.isRotationPaused = false;
+          this.selectedStructureId = null;
+
+          // Limites angulares por modo conforme especificação:
+          // Olho completo: ±24° horizontal, ±17° vertical
+          // Anatomia expandida: ±20° horizontal, ±12° vertical
+          this.limitsComplete = {
+            yaw: THREE.MathUtils.degToRad(24),
+            pitch: THREE.MathUtils.degToRad(17)
+          };
+          this.limitsExpanded = {
+            yaw: THREE.MathUtils.degToRad(20),
+            pitch: THREE.MathUtils.degToRad(12)
+          };
+
+          // Preservação das propriedades de acompanhamento e amortecimento
+          this.maxYaw = this.limitsComplete.yaw;
+          this.maxPitch = this.limitsComplete.pitch;
+          this.targetLook = { x: 0, y: 0 };
+          this.currentLook = { x: 0, y: 0 };
+          this.normalizedCursor = { x: 0, y: 0 };
+          this.lastClientX = window.innerWidth * 0.5;
+          this.lastClientY = window.innerHeight * 0.45;
+          this.hasGlobalCursor = false;
+          this.dampingFactor = 0.085;
+
+          // Controle de interação por toque em dispositivos móveis
+          this.touchState = {
+            activeOnStage: false,
+            startX: 0,
+            startY: 0,
+            lastX: 0,
+            lastY: 0,
+            moved: false,
+            isScrollingPage: false
+          };
+
+          // Estado da animação de piscar (250ms a 400ms)
+          this.isBlinking = false;
+          this.blinkStartTime = 0;
+          this.blinkDuration = 330;
+
+          // Controle de viewport e acessibilidade
+          this.isInViewport = true;
+          this.prefersReducedMotion = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          this.disposed = false;
+          this.rafId = null;
+
+          // Recursos para descarte limpo (.dispose())
+          this.geometries = [];
+          this.materials = [];
+          this.textures = [];
+
+          // Definição das 9 estruturas anatômicas obrigatórias + Conteúdo Clínico Educativo
+          this.anatomyStructures = [
+            {
+              id: 'cornea',
+              name: 'Córnea',
+              row: 'top',
+              tier: 0,
+              assembledPos: new THREE.Vector3(0, 0, 0.90),
+              expandedPos: new THREE.Vector3(-4.25, 0, 0),
+              anchorOffset: new THREE.Vector3(0, 0.61, -0.05),
+              description: 'Camada transparente anterior do olho, importante para proteção e focalização da luz.',
+              conditions: [
+                {
+                  name: 'Ceratocone',
+                  detail: 'Afinamento e deformação progressiva da córnea, causando visão distorcida.'
+                },
+                {
+                  name: 'Astigmatismo corneano',
+                  detail: 'Alteração da curvatura corneana que pode provocar visão borrada.'
+                },
+                {
+                  name: 'Ceratite',
+                  detail: 'Inflamação da córnea, podendo causar dor, vermelhidão e sensibilidade à luz.'
+                },
+                {
+                  name: 'Úlcera de córnea',
+                  detail: 'Ferida corneana que pode comprometer gravemente a visão.'
+                },
+                {
+                  name: 'Distrofia de Fuchs',
+                  detail: 'Doença do endotélio corneano que pode provocar inchaço e perda de transparência.'
+                }
+              ]
+            },
+            {
+              id: 'iris_pupil',
+              name: 'Íris e pupila',
+              row: 'bottom',
+              tier: 0,
+              assembledPos: new THREE.Vector3(0, 0, 0.875),
+              expandedPos: new THREE.Vector3(-3.20, 0, 0),
+              anchorOffset: new THREE.Vector3(0, -0.55, 0),
+              description: 'A íris regula o tamanho da pupila, controlando a entrada de luz.',
+              conditions: [
+                {
+                  name: 'Irite',
+                  detail: 'Inflamação da íris que pode causar dor e fotofobia.'
+                },
+                {
+                  name: 'Aniridia',
+                  detail: 'Desenvolvimento incompleto da íris, geralmente de origem genética.'
+                },
+                {
+                  name: 'Coloboma de íris',
+                  detail: 'Defeito congênito na formação da íris.'
+                },
+                {
+                  name: 'Anisocoria',
+                  detail: 'Diferença de tamanho entre as pupilas, com causas fisiológicas ou patológicas.'
+                },
+                {
+                  name: 'Sinequias posteriores',
+                  detail: 'Aderências entre a íris e o cristalino, frequentemente associadas à inflamação.'
+                }
+              ]
+            },
+            {
+              id: 'lens',
+              name: 'Cristalino',
+              row: 'top',
+              tier: 1,
+              assembledPos: new THREE.Vector3(0, 0, 0.60),
+              expandedPos: new THREE.Vector3(-2.22, 0, 0),
+              anchorOffset: new THREE.Vector3(0, 0.42, 0),
+              description: 'Lente natural do olho que participa da focalização das imagens.',
+              conditions: [
+                {
+                  name: 'Catarata',
+                  detail: 'Perda da transparência do cristalino, causando redução da visão.'
+                },
+                {
+                  name: 'Presbiopia',
+                  detail: 'Diminuição progressiva da capacidade de focalizar objetos próximos.'
+                },
+                {
+                  name: 'Catarata congênita',
+                  detail: 'Opacidade do cristalino presente desde o nascimento ou início da vida.'
+                },
+                {
+                  name: 'Ectopia lentis',
+                  detail: 'Deslocamento parcial ou completo do cristalino.'
+                },
+                {
+                  name: 'Esferofacia',
+                  detail: 'Alteração de formato do cristalino, que pode comprometer a focalização e favorecer complicações.'
+                }
+              ]
+            },
+            {
+              id: 'ciliary_body',
+              name: 'Corpo ciliar',
+              row: 'bottom',
+              tier: 1,
+              assembledPos: new THREE.Vector3(0, 0, 0.62),
+              expandedPos: new THREE.Vector3(-1.22, 0, 0),
+              anchorOffset: new THREE.Vector3(0, -0.78, 0),
+              description: 'Estrutura que participa da acomodação visual e da produção do humor aquoso.',
+              conditions: [
+                {
+                  name: 'Ciclite',
+                  detail: 'Inflamação do corpo ciliar.'
+                },
+                {
+                  name: 'Iridociclite',
+                  detail: 'Inflamação envolvendo a íris e o corpo ciliar.'
+                },
+                {
+                  name: 'Espasmo de acomodação',
+                  detail: 'Contração excessiva do músculo ciliar, podendo provocar visão borrada.'
+                },
+                {
+                  name: 'Insuficiência de acomodação',
+                  detail: 'Dificuldade para sustentar o foco em objetos próximos.'
+                },
+                {
+                  name: 'Melanoma do corpo ciliar',
+                  detail: 'Tumor maligno raro que pode surgir nessa região.'
+                }
+              ]
+            },
+            {
+              id: 'vitreous',
+              name: 'Humor vítreo',
+              row: 'top',
+              tier: 0,
+              assembledPos: new THREE.Vector3(0, 0, -0.05),
+              expandedPos: new THREE.Vector3(0.05, 0, 0),
+              anchorOffset: new THREE.Vector3(0, 0.94, 0),
+              description: 'Material gelatinoso transparente que ocupa a maior parte da cavidade interna do olho.',
+              conditions: [
+                {
+                  name: 'Miodesopsias',
+                  detail: 'Percepção de pontos ou manchas flutuantes, frequentemente relacionadas a opacidades vítreas.'
+                },
+                {
+                  name: 'Descolamento posterior do vítreo',
+                  detail: 'Separação do vítreo da superfície retiniana.'
+                },
+                {
+                  name: 'Hemorragia vítrea',
+                  detail: 'Sangramento na cavidade vítrea.'
+                },
+                {
+                  name: 'Vitreíte',
+                  detail: 'Presença de inflamação no vítreo.'
+                },
+                {
+                  name: 'Hialose asteroide',
+                  detail: 'Depósitos de pequenas partículas no vítreo, geralmente sem comprometimento visual importante.'
+                }
+              ]
+            },
+            {
+              id: 'retina',
+              name: 'Retina',
+              row: 'bottom',
+              tier: 0,
+              assembledPos: new THREE.Vector3(0, 0, 0),
+              expandedPos: new THREE.Vector3(1.42, 0, 0),
+              anchorOffset: new THREE.Vector3(0, -0.98, -0.22),
+              description: 'Tecido nervoso que transforma a luz em sinais transmitidos ao cérebro.',
+              conditions: [
+                {
+                  name: 'Retinopatia diabética',
+                  detail: 'Danos aos vasos da retina associados ao diabetes.'
+                },
+                {
+                  name: 'Descolamento de retina',
+                  detail: 'Separação da retina neurossensorial do tecido subjacente.'
+                },
+                {
+                  name: 'Degeneração macular relacionada à idade',
+                  detail: 'Doença que compromete a região central da retina.'
+                },
+                {
+                  name: 'Retinose pigmentar',
+                  detail: 'Grupo de doenças hereditárias que provocam degeneração progressiva da retina.'
+                },
+                {
+                  name: 'Oclusão vascular retiniana',
+                  detail: 'Bloqueio arterial ou venoso que pode causar perda de visão.'
+                }
+              ]
+            },
+            {
+              id: 'choroid',
+              name: 'Coroide',
+              row: 'top',
+              tier: 1,
+              assembledPos: new THREE.Vector3(0, 0, 0),
+              expandedPos: new THREE.Vector3(2.38, 0, 0),
+              anchorOffset: new THREE.Vector3(0, 1.04, -0.26),
+              description: 'Camada vascular localizada entre a retina e a esclera, importante para a nutrição da retina externa.',
+              conditions: [
+                {
+                  name: 'Coroidite',
+                  detail: 'Inflamação da coroide.'
+                },
+                {
+                  name: 'Coriorretinite',
+                  detail: 'Inflamação envolvendo coroide e retina.'
+                },
+                {
+                  name: 'Melanoma de coroide',
+                  detail: 'Tumor maligno intraocular.'
+                },
+                {
+                  name: 'Neovascularização de coroide',
+                  detail: 'Crescimento anormal de vasos que podem provocar vazamentos e sangramentos.'
+                },
+                {
+                  name: 'Descolamento de coroide',
+                  detail: 'Separação anormal da coroide da parede externa do olho.'
+                }
+              ]
+            },
+            {
+              id: 'sclera',
+              name: 'Esclera',
+              row: 'bottom',
+              tier: 1,
+              assembledPos: new THREE.Vector3(0, 0, 0),
+              expandedPos: new THREE.Vector3(3.38, 0, 0),
+              anchorOffset: new THREE.Vector3(0, -1.12, -0.32),
+              description: 'Camada externa resistente que protege o globo ocular e contribui para sua sustentação.',
+              conditions: [
+                {
+                  name: 'Esclerite',
+                  detail: 'Inflamação profunda da esclera, frequentemente dolorosa.'
+                },
+                {
+                  name: 'Episclerite',
+                  detail: 'Inflamação mais superficial, geralmente de evolução benigna.'
+                },
+                {
+                  name: 'Escleromalácia perfurante',
+                  detail: 'Afinamento escleral grave associado a determinadas doenças sistêmicas.'
+                },
+                {
+                  name: 'Estafiloma escleral',
+                  detail: 'Protrusão de uma região enfraquecida da parede ocular.'
+                },
+                {
+                  name: 'Ruptura escleral',
+                  detail: 'Lesão traumática da parede do globo ocular.'
+                }
+              ]
+            },
+            {
+              id: 'optic_nerve',
+              name: 'Nervo óptico',
+              row: 'top',
+              tier: 0,
+              assembledPos: new THREE.Vector3(0, 0, -0.95),
+              expandedPos: new THREE.Vector3(4.52, -0.04, 0),
+              anchorOffset: new THREE.Vector3(0, 0.22, -0.45),
+              description: 'Estrutura que transmite as informações visuais da retina para o cérebro.',
+              conditions: [
+                {
+                  name: 'Glaucoma',
+                  detail: 'Neuropatia óptica progressiva que pode comprometer o campo visual.'
+                },
+                {
+                  name: 'Neurite óptica',
+                  detail: 'Inflamação do nervo óptico, frequentemente associada à redução da visão.'
+                },
+                {
+                  name: 'Neuropatia óptica isquêmica',
+                  detail: 'Lesão relacionada à redução do suprimento sanguíneo.'
+                },
+                {
+                  name: 'Atrofia óptica',
+                  detail: 'Perda de fibras nervosas do nervo óptico.'
+                },
+                {
+                  name: 'Papiledema',
+                  detail: 'Inchaço do disco óptico associado ao aumento da pressão intracraniana.'
+                }
+              ]
+            }
+          ];
+
+          this.structureNodes = {};
+          this.structureMaterials = {};
+          this.labelElements = {};
+          this.expandedPickableMeshes = [];
+
+          this.init();
+        }
+
+        init() {
+          if (!this.checkWebGLSupport()) {
+            this.showFallback();
+            return;
+          }
+
+          this.setupRendererAndScene();
+          this.setupLighting();
+          this.buildEyeGeometry();
+          this.buildDOMLabels();
+          this.bindEvents();
+          this.updateResponsiveLayout();
+          this.startLoop();
+        }
+
+        checkWebGLSupport() {
+          try {
+            const testCanvas = document.createElement('canvas');
+            return !!(
+              window.WebGLRenderingContext &&
+              (testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl'))
+            );
+          } catch (e) {
+            return false;
+          }
+        }
+
+        showFallback() {
+          if (this.fallbackEl) {
+            this.fallbackEl.classList.remove('hidden');
+            this.fallbackEl.classList.add('flex');
+          }
+          if (this.toggleBtn) {
+            this.toggleBtn.disabled = true;
+          }
+        }
+
+        trackGeo(geo) {
+          this.geometries.push(geo);
+          return geo;
+        }
+
+        trackMat(mat) {
+          this.materials.push(mat);
+          return mat;
+        }
+
+        trackTex(tex) {
+          this.textures.push(tex);
+          return tex;
+        }
+
+        /**
+         * Registra as malhas e materiais de uma estrutura anatômica para seleção por Raycaster e destaque visual
+         */
+        registerStructureGroup(structureId, group, isTransparentVolume) {
+          this.structureNodes[structureId] = group;
+          this.structureMaterials[structureId] = [];
+
+          group.traverse((child) => {
+            if (child.isMesh) {
+              child.userData.structureId = structureId;
+              child.userData.isTransparentVolume = !!isTransparentVolume;
+              this.expandedPickableMeshes.push(child);
+              if (child.material && child.material.emissive) {
+                this.structureMaterials[structureId].push({
+                  material: child.material,
+                  baseEmissiveHex: child.material.emissive.getHex()
+                });
+              }
+            }
+          });
+        }
+
+        setupRendererAndScene() {
+          const width = this.stageEl.clientWidth || 960;
+          const height = this.stageEl.clientHeight || 540;
+
+          this.scene = new THREE.Scene();
+
+          this.camera = new THREE.PerspectiveCamera(32, width / height, 0.1, 100);
+          this.camera.position.set(0, 0.12, 6.2);
+          this.camera.lookAt(0, 0, 0);
+
+          this.renderer = new THREE.WebGLRenderer({
+            canvas: this.canvasEl,
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance'
+          });
+          this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          this.renderer.setSize(width, height, false);
+          this.renderer.physicallyCorrectLights = true;
+          this.renderer.outputEncoding = THREE.sRGBEncoding;
+          this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+          this.renderer.toneMappingExposure = 1.08;
+
+          const envMap = this.trackTex(ProceduralTextures.createStudioEnvMap());
+          this.scene.environment = envMap;
+          this.envMap = envMap;
+
+          this.raycaster = new THREE.Raycaster();
+          this.pointerNDC = new THREE.Vector2();
+        }
+
+        setupLighting() {
+          const ambientLight = new THREE.AmbientLight(0xF4F8FC, 1.35);
+          this.scene.add(ambientLight);
+
+          const keyLight = new THREE.DirectionalLight(0xFFFFFF, 2.35);
+          keyLight.position.set(-3.8, 4.4, 5.6);
+          this.scene.add(keyLight);
+
+          const fillLight = new THREE.DirectionalLight(0xE8F2FC, 1.25);
+          fillLight.position.set(4.5, 1.2, 4.0);
+          this.scene.add(fillLight);
+
+          const rimLight = new THREE.DirectionalLight(0xFFFFFF, 1.05);
+          rimLight.position.set(0.5, 3.8, -4.5);
+          this.scene.add(rimLight);
+
+          const bounceLight = new THREE.DirectionalLight(0xDDE8F4, 0.75);
+          bounceLight.position.set(0, -4.0, 2.0);
+          this.scene.add(bounceLight);
+        }
+
+        buildEyeGeometry() {
+          this.masterGroup = new THREE.Group();
+          this.scene.add(this.masterGroup);
+
+          // Grupo-pivô comum para orientação do olhar (tanto no modo completo quanto no modo expandido)
+          this.gazeGroup = new THREE.Group();
+          this.baseCompleteRotation = { x: -0.03, y: 0.14 };
+          this.gazeGroup.rotation.set(this.baseCompleteRotation.x, this.baseCompleteRotation.y, 0);
+          this.masterGroup.add(this.gazeGroup);
+
+          const scleraMaps = ProceduralTextures.createScleraTextures();
+          this.trackTex(scleraMaps.colorTex);
+          this.trackTex(scleraMaps.bumpTex);
+
+          const irisMaps = ProceduralTextures.createIrisTextures();
+          this.trackTex(irisMaps.colorTex);
+          this.trackTex(irisMaps.bumpTex);
+
+          const retinaTex = this.trackTex(ProceduralTextures.createRetinaTexture());
+          const choroidTex = this.trackTex(ProceduralTextures.createChoroidTexture());
+          const ciliaryTex = this.trackTex(ProceduralTextures.createCiliaryTexture());
+          const shadowTex = this.trackTex(ProceduralTextures.createContactShadowTexture());
+
+          // -------------------------------------------------------------------
+          // CASCA COMPLEMENTAR DA ESCLERA ANTERIOR (Modo Completo)
+          // -------------------------------------------------------------------
+          const anteriorScleraGeo = this.trackGeo(            new THREE.SphereGeometry(1.18, 64, 48, 0, Math.PI * 2, 0.455, Math.PI * 0.56)
+          );
+          anteriorScleraGeo.rotateX(Math.PI / 2);
+
+          this.anteriorScleraMat = this.trackMat(
+            new THREE.MeshPhysicalMaterial({
+              map: scleraMaps.colorTex,
+              bumpMap: scleraMaps.bumpTex,
+              bumpScale: 0.0045,
+              roughness: 0.18,
+              metalness: 0.0,
+              clearcoat: 0.85,
+              clearcoatRoughness: 0.08,
+              envMap: this.envMap,
+              envMapIntensity: 0.9,
+              transparent: true,
+              opacity: 1.0
+            })
+          );
+          this.anteriorScleraMesh = new THREE.Mesh(anteriorScleraGeo, this.anteriorScleraMat);
+          this.gazeGroup.add(this.anteriorScleraMesh);
+
+          // -------------------------------------------------------------------
+          // ESTRUTURA 1: CÓRNEA
+          // -------------------------------------------------------------------
+          const corneaGroup = new THREE.Group();
+          const corneaGeo = this.trackGeo(
+            new THREE.SphereGeometry(0.62, 56, 36, 0, Math.PI * 2, 0, Math.PI * 0.42)
+          );
+          corneaGeo.rotateX(Math.PI / 2);
+          corneaGeo.translate(0, 0, -0.14);
+
+          this.corneaMat = this.trackMat(
+            new THREE.MeshPhysicalMaterial({
+              color: 0xF4FAFF,
+              roughness: 0.03,
+              metalness: 0.0,
+              transmission: 0.92,
+              transparent: true,
+              opacity: 0.44,
+              ior: 1.376,
+              reflectivity: 0.95,
+              clearcoat: 1.0,
+              clearcoatRoughness: 0.02,
+              envMap: this.envMap,
+              envMapIntensity: 1.65,
+              depthWrite: false,
+              side: THREE.DoubleSide
+            })
+          );
+          const corneaMesh = new THREE.Mesh(corneaGeo, this.corneaMat);
+
+          const corneaRimGeo = this.trackGeo(new THREE.TorusGeometry(0.595, 0.012, 16, 64));
+          this.corneaRimMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              color: 0xB8D4EC,
+              roughness: 0.2,
+              transparent: true,
+              opacity: 0.0
+            })
+          );
+          const corneaRimMesh = new THREE.Mesh(corneaRimGeo, this.corneaRimMat);
+          corneaRimMesh.position.z = 0.01;
+
+          corneaGroup.add(corneaMesh);
+          corneaGroup.add(corneaRimMesh);
+          corneaGroup.position.copy(this.anatomyStructures[0].assembledPos);
+          this.gazeGroup.add(corneaGroup);
+          this.registerStructureGroup('cornea', corneaGroup, true);
+
+          // -------------------------------------------------------------------
+          // ESTRUTURA 2: ÍRIS E PUPILA
+          // -------------------------------------------------------------------
+          const irisGroup = new THREE.Group();
+          const irisGeo = this.trackGeo(new THREE.CylinderGeometry(0.535, 0.545, 0.048, 64, 4, false));
+          irisGeo.rotateX(Math.PI / 2);
+
+          const posAttr = irisGeo.attributes.position;
+          const uvAttr = irisGeo.attributes.uv;
+          for (let i = 0; i < posAttr.count; i++) {
+            const vx = posAttr.getX(i);
+            const vy = posAttr.getY(i);
+            const u = (vx / (0.545 * 2)) + 0.5;
+            const v = (vy / (0.545 * 2)) + 0.5;
+            uvAttr.setXY(i, u, v);
+          }
+          uvAttr.needsUpdate = true;
+
+          const irisMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              map: irisMaps.colorTex,
+              bumpMap: irisMaps.bumpTex,
+              bumpScale: 0.018,
+              roughness: 0.34,
+              metalness: 0.06,
+              envMap: this.envMap,
+              envMapIntensity: 0.55
+            })
+          );
+          const irisMesh = new THREE.Mesh(irisGeo, irisMat);
+
+          const pupilGeo = this.trackGeo(new THREE.CylinderGeometry(0.198, 0.198, 0.056, 48));
+          pupilGeo.rotateX(Math.PI / 2);
+          const pupilMat = this.trackMat(
+            new THREE.MeshBasicMaterial({
+              color: 0x020305
+            })
+          );
+          const pupilMesh = new THREE.Mesh(pupilGeo, pupilMat);
+          pupilMesh.position.z = 0.002;
+
+          const pupilBevelGeo = this.trackGeo(new THREE.TorusGeometry(0.20, 0.011, 16, 48));
+          const pupilBevelMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              color: 0x0A1E36,
+              roughness: 0.22,
+              metalness: 0.15
+            })
+          );
+          const pupilBevelMesh = new THREE.Mesh(pupilBevelGeo, pupilBevelMat);
+          pupilBevelMesh.position.z = 0.026;
+
+          irisGroup.add(irisMesh);
+          irisGroup.add(pupilMesh);
+          irisGroup.add(pupilBevelMesh);
+          irisGroup.position.copy(this.anatomyStructures[1].assembledPos);
+          this.gazeGroup.add(irisGroup);
+          this.registerStructureGroup('iris_pupil', irisGroup, false);
+
+          // -------------------------------------------------------------------
+          // ESTRUTURA 3: CRISTALINO
+          // -------------------------------------------------------------------
+          const lensGroup = new THREE.Group();
+          const lensGeo = this.trackGeo(new THREE.SphereGeometry(0.41, 48, 32));
+          lensGeo.scale(1.0, 1.0, 0.44);
+
+          const lensMat = this.trackMat(
+            new THREE.MeshPhysicalMaterial({
+              color: 0xF5FAFF,
+              roughness: 0.06,
+              metalness: 0.0,
+              transmission: 0.88,
+              transparent: true,
+              opacity: 0.62,
+              ior: 1.41,
+              clearcoat: 1.0,
+              clearcoatRoughness: 0.04,
+              envMap: this.envMap,
+              envMapIntensity: 1.45,
+              depthWrite: false
+            })
+          );
+          const lensMesh = new THREE.Mesh(lensGeo, lensMat);
+
+          const lensEquatorGeo = this.trackGeo(new THREE.TorusGeometry(0.408, 0.008, 12, 48));
+          const lensEquatorMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              color: 0xCBE0F5,
+              roughness: 0.25,
+              transparent: true,
+              opacity: 0.48
+            })
+          );
+          const lensEquatorMesh = new THREE.Mesh(lensEquatorGeo, lensEquatorMat);
+
+          lensGroup.add(lensMesh);
+          lensGroup.add(lensEquatorMesh);
+          lensGroup.position.copy(this.anatomyStructures[2].assembledPos);
+          this.gazeGroup.add(lensGroup);
+          this.registerStructureGroup('lens', lensGroup, true);
+
+          // -------------------------------------------------------------------
+          // ESTRUTURA 4: CORPO CILIAR
+          // -------------------------------------------------------------------
+          const ciliaryGroup = new THREE.Group();
+          const ciliaryMainGeo = this.trackGeo(new THREE.TorusGeometry(0.68, 0.145, 24, 60));
+          const cilPos = ciliaryMainGeo.attributes.position;
+          for (let i = 0; i < cilPos.count; i++) {
+            const x = cilPos.getX(i);
+            const y = cilPos.getY(i);
+            const z = cilPos.getZ(i);
+            const angle = Math.atan2(y, x);
+            const r = Math.sqrt(x * x + y * y);
+            const wave = Math.sin(angle * 36) * 0.022 + Math.cos(angle * 12) * 0.015;
+            const factor = (r + wave) / (r || 1);
+            cilPos.setXYZ(i, x * factor, y * factor, z * 0.78);
+          }
+          ciliaryMainGeo.computeVertexNormals();
+
+          const ciliaryMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              map: ciliaryTex,
+              bumpMap: ciliaryTex,
+              bumpScale: 0.015,
+              color: 0xD27D6A,
+              roughness: 0.42,
+              metalness: 0.04,
+              envMap: this.envMap,
+              envMapIntensity: 0.45
+            })
+          );
+          const ciliaryMesh = new THREE.Mesh(ciliaryMainGeo, ciliaryMat);
+
+          const zonuleGeo = this.trackGeo(new THREE.RingGeometry(0.41, 0.56, 48, 1));
+          const zonuleMat = this.trackMat(
+            new THREE.MeshBasicMaterial({
+              color: 0xE2ECF5,
+              side: THREE.DoubleSide,
+              transparent: true,
+              opacity: 0.26,
+              wireframe: true
+            })
+          );
+          const zonuleMesh = new THREE.Mesh(zonuleGeo, zonuleMat);
+
+          ciliaryGroup.add(ciliaryMesh);
+          ciliaryGroup.add(zonuleMesh);
+          ciliaryGroup.position.copy(this.anatomyStructures[3].assembledPos);
+          this.gazeGroup.add(ciliaryGroup);
+          this.registerStructureGroup('ciliary_body', ciliaryGroup, false);
+
+          // -------------------------------------------------------------------
+          // ESTRUTURA 5: HUMOR VÍTREO
+          // -------------------------------------------------------------------
+          const vitreousGroup = new THREE.Group();
+          const vitreousGeo = this.trackGeo(new THREE.SphereGeometry(0.95, 48, 36));
+          const vitreousMat = this.trackMat(
+            new THREE.MeshPhysicalMaterial({
+              color: 0xEEF6FC,
+              roughness: 0.08,
+              metalness: 0.0,
+              transmission: 0.86,
+              transparent: true,
+              opacity: 0.46,
+              ior: 1.336,
+              clearcoat: 0.9,
+              clearcoatRoughness: 0.06,
+              envMap: this.envMap,
+              envMapIntensity: 1.25,
+              depthWrite: false
+            })
+          );
+          const vitreousMesh = new THREE.Mesh(vitreousGeo, vitreousMat);
+          vitreousGroup.add(vitreousMesh);
+          vitreousGroup.position.copy(this.anatomyStructures[4].assembledPos);
+          this.gazeGroup.add(vitreousGroup);
+          this.registerStructureGroup('vitreous', vitreousGroup, true);
+
+          // -------------------------------------------------------------------
+          // ESTRUTURA 6: RETINA
+          // -------------------------------------------------------------------
+          const retinaGroup = this.thisCreateConcentricShell({
+            radius: 1.01,
+            thickness: 0.032,
+            phiStart: Math.PI * 0.45,
+            phiLength: Math.PI * 0.51,
+            outerMap: retinaTex,
+            outerColor: 0xEB9542,
+            innerColor: 0xF5AE5D,
+            rimColor: 0xF8C27A,
+            roughness: 0.36
+          });
+          retinaGroup.position.copy(this.anatomyStructures[5].assembledPos);
+          this.gazeGroup.add(retinaGroup);
+          this.registerStructureGroup('retina', retinaGroup, false);
+
+          // -------------------------------------------------------------------
+          // ESTRUTURA 7: COROIDE
+          // -------------------------------------------------------------------
+          const choroidGroup = this.thisCreateConcentricShell({
+            radius: 1.08,
+            thickness: 0.04,
+            phiStart: Math.PI * 0.47,
+            phiLength: Math.PI * 0.49,
+            outerMap: choroidTex,
+            outerColor: 0x7A2822,
+            innerColor: 0x5E1B16,
+            rimColor: 0x9C3D35,
+            roughness: 0.38
+          });
+          choroidGroup.position.copy(this.anatomyStructures[6].assembledPos);
+          this.gazeGroup.add(choroidGroup);
+          this.registerStructureGroup('choroid', choroidGroup, false);
+
+          // -------------------------------------------------------------------
+          // ESTRUTURA 8: ESCLERA
+          // -------------------------------------------------------------------
+          const scleraGroup = new THREE.Group();
+          const scleraPostGeo = this.trackGeo(
+            new THREE.SphereGeometry(1.18, 64, 48, 0, Math.PI * 2, Math.PI * 0.49, Math.PI * 0.51)
+          );
+          scleraPostGeo.rotateX(Math.PI / 2);
+
+          const scleraPostMat = this.trackMat(
+            new THREE.MeshPhysicalMaterial({
+              map: scleraMaps.colorTex,
+              bumpMap: scleraMaps.bumpTex,
+              bumpScale: 0.0045,
+              roughness: 0.18,
+              metalness: 0.0,
+              clearcoat: 0.85,
+              clearcoatRoughness: 0.08,
+              envMap: this.envMap,
+              envMapIntensity: 0.9,
+              side: THREE.DoubleSide
+            })
+          );
+          const scleraPostMesh = new THREE.Mesh(scleraPostGeo, scleraPostMat);
+
+          const scleraRimGeo = this.trackGeo(new THREE.RingGeometry(1.135, 1.18, 64));
+          const scleraRimMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              color: 0xEFE4DC,
+              roughness: 0.35,
+              side: THREE.DoubleSide
+            })
+          );
+          const scleraRimMesh = new THREE.Mesh(scleraRimGeo, scleraRimMat);
+          scleraRimMesh.position.z = 0.035;
+
+          scleraGroup.add(scleraPostMesh);
+          scleraGroup.add(scleraRimMesh);
+          scleraGroup.position.copy(this.anatomyStructures[7].assembledPos);
+          this.gazeGroup.add(scleraGroup);
+          this.registerStructureGroup('sclera', scleraGroup, false);
+
+          // -------------------------------------------------------------------
+          // ESTRUTURA 9: NERVO ÓPTICO
+          // -------------------------------------------------------------------
+          const opticNerveGroup = new THREE.Group();
+          const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, 0, 0.12),
+            new THREE.Vector3(0, -0.02, -0.22),
+            new THREE.Vector3(0, -0.06, -0.56),
+            new THREE.Vector3(0, -0.09, -0.82)
+          ]);
+          const nerveSheathGeo = this.trackGeo(new THREE.TubeGeometry(curve, 24, 0.21, 32, false));
+          const nerveSheathMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              color: 0xE6C994,
+              roughness: 0.42,
+              metalness: 0.02
+            })
+          );
+          const nerveSheathMesh = new THREE.Mesh(nerveSheathGeo, nerveSheathMat);
+
+          const fascicleCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, -0.05, -0.45),
+            new THREE.Vector3(0, -0.10, -0.96)
+          ]);
+          const fascicleGeo = this.trackGeo(new THREE.TubeGeometry(fascicleCurve, 12, 0.145, 24, true));
+          const fascicleMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              color: 0xD4A656,
+              roughness: 0.48
+            })
+          );
+          const fascicleMesh = new THREE.Mesh(fascicleGeo, fascicleMat);
+
+          opticNerveGroup.add(nerveSheathMesh);
+          opticNerveGroup.add(fascicleMesh);
+          opticNerveGroup.position.copy(this.anatomyStructures[8].assembledPos);
+          this.gazeGroup.add(opticNerveGroup);
+          this.registerStructureGroup('optic_nerve', opticNerveGroup, false);
+
+          // -------------------------------------------------------------------
+          // PÁLPEBRAS 3D (Modo Completo)
+          // -------------------------------------------------------------------
+          this.eyelidGroup = new THREE.Group();
+          this.gazeGroup.add(this.eyelidGroup);
+
+          const eyelidMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              color: 0xEBC9BA,
+              roughness: 0.36,
+              metalness: 0.02,
+              side: THREE.DoubleSide
+            })
+          );
+
+          const eyelidMarginMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              color: 0xD9A796,
+              roughness: 0.28
+            })
+          );
+
+          this.upperEyelidPivot = new THREE.Group();
+          const upperLidGeo = this.trackGeo(
+            new THREE.SphereGeometry(1.24, 48, 28, 0, Math.PI * 2, 0, Math.PI * 0.48)
+          );
+          const upperLidMesh = new THREE.Mesh(upperLidGeo, eyelidMat);
+          const upperMarginGeo = this.trackGeo(new THREE.TorusGeometry(1.236, 0.024, 14, 48));
+          upperMarginGeo.rotateX(Math.PI / 2);
+          upperMarginGeo.translate(0, 0.08, 0);
+          const upperMarginMesh = new THREE.Mesh(upperMarginGeo, eyelidMarginMat);
+          this.upperEyelidPivot.add(upperLidMesh);
+          this.upperEyelidPivot.add(upperMarginMesh);
+
+          this.lowerEyelidPivot = new THREE.Group();
+          const lowerLidGeo = this.trackGeo(
+            new THREE.SphereGeometry(1.235, 48, 28, 0, Math.PI * 2, Math.PI * 0.52, Math.PI * 0.48)
+          );
+          const lowerLidMesh = new THREE.Mesh(lowerLidGeo, eyelidMat);
+          const lowerMarginGeo = this.trackGeo(new THREE.TorusGeometry(1.232, 0.02, 14, 48));
+          lowerMarginGeo.rotateX(Math.PI / 2);
+          lowerMarginGeo.translate(0, -0.08, 0);
+          const lowerMarginMesh = new THREE.Mesh(lowerMarginGeo, eyelidMarginMat);
+          this.lowerEyelidPivot.add(lowerLidMesh);
+          this.lowerEyelidPivot.add(lowerMarginMesh);
+
+          this.eyelidGroup.add(this.upperEyelidPivot);
+          this.eyelidGroup.add(this.lowerEyelidPivot);
+          this.applyBlinkPose(0);
+
+          // -------------------------------------------------------------------
+          // SOMBRA DE CONTATO SUAVE NO PLANO INFERIOR
+          // -------------------------------------------------------------------
+          const shadowGeo = this.trackGeo(new THREE.PlaneGeometry(3.2, 2.2));
+          shadowGeo.rotateX(-Math.PI / 2);
+          this.shadowMat = this.trackMat(
+            new THREE.MeshBasicMaterial({
+              map: shadowTex,
+              transparent: true,
+              opacity: 0.75,
+              depthWrite: false
+            })
+          );
+          this.shadowMesh = new THREE.Mesh(shadowGeo, this.shadowMat);
+          this.shadowMesh.position.set(0, -1.52, 0);
+          this.masterGroup.add(this.shadowMesh);
+
+          // Alvos clicáveis para piscar no modo completo
+          this.clickableMeshes = [
+            this.anteriorScleraMesh,
+            corneaMesh,
+            irisMesh,
+            pupilMesh,
+            scleraPostMesh
+          ];
+        }
+
+        thisCreateConcentricShell(cfg) {
+          const group = new THREE.Group();
+
+          const outerGeo = this.trackGeo(
+            new THREE.SphereGeometry(cfg.radius, 56, 40, 0, Math.PI * 2, cfg.phiStart, cfg.phiLength)
+          );
+          outerGeo.rotateX(Math.PI / 2);
+
+          const innerGeo = this.trackGeo(
+            new THREE.SphereGeometry(cfg.radius - cfg.thickness, 56, 40, 0, Math.PI * 2, cfg.phiStart, cfg.phiLength)
+          );
+          innerGeo.rotateX(Math.PI / 2);
+
+          const outerMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              map: cfg.outerMap || null,
+              color: cfg.outerColor,
+              roughness: cfg.roughness,
+              metalness: 0.04,
+              envMap: this.envMap,
+              envMapIntensity: 0.55,
+              side: THREE.FrontSide
+            })
+          );
+
+          const innerMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              map: cfg.outerMap || null,
+              color: cfg.innerColor,
+              roughness: cfg.roughness + 0.08,
+              metalness: 0.02,
+              side: THREE.BackSide
+            })
+          );
+
+          const outerMesh = new THREE.Mesh(outerGeo, outerMat);
+          const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+
+          const cutTheta = cfg.phiStart;
+          const ringR = cfg.radius * Math.sin(cutTheta);
+          const ringInnerR = (cfg.radius - cfg.thickness) * Math.sin(cutTheta);
+          const ringZ = cfg.radius * Math.cos(cutTheta);
+
+          const rimGeo = this.trackGeo(new THREE.RingGeometry(ringInnerR, ringR, 56));
+          const rimMat = this.trackMat(
+            new THREE.MeshStandardMaterial({
+              color: cfg.rimColor,
+              roughness: 0.32,
+              side: THREE.DoubleSide
+            })
+          );
+          const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+          rimMesh.position.z = ringZ;
+
+          group.add(outerMesh);
+          group.add(innerMesh);
+          group.add(rimMesh);
+          return group;
+        }
+
+        /**
+         * Cria os rótulos HTML acessíveis (botões clicáveis) e as linhas SVG para as 9 estruturas
+         */
+        buildDOMLabels() {
+          this.labelsContainerEl.innerHTML = '';
+          this.svgLinesEl.innerHTML = '';
+
+          this.anatomyStructures.forEach((item) => {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            line.setAttribute('class', 'grr-leader-line');
+            this.svgLinesEl.appendChild(line);
+
+            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('class', 'grr-leader-dot');
+            dot.setAttribute('r', '3.0');
+            this.svgLinesEl.appendChild(dot);
+
+            // Rótulo como botão acessível para permitir clique por mouse, toque ou teclado
+            const label = document.createElement('button');
+            label.type = 'button';
+            label.className = 'grr-label-item';
+            label.textContent = item.name;
+            label.dataset.structureId = item.id;
+            label.setAttribute('aria-label', `Ver informações clínicas sobre ${item.name}`);
+
+            label.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (this.mode === 'expanded') {
+                this.selectStructure(item.id);
+              }
+            });
+
+            this.labelsContainerEl.appendChild(label);
+            this.labelElements[item.id] = { line, dot, label };
+          });
+        }
+
+        /**
+         * Calcula a orientação-alvo (targetLook) considerando o centro visual do olho na página
+         * e aplicando atenuação suave para evitar rotações exageradas quando o cursor estiver distante.
+         */
+        updateTargetLookFromClientXY(clientX, clientY) {
+          if (!this.stageEl) return;
+
+          const rect = this.stageEl.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) return;
+
+          const eyeCenterX = rect.left + rect.width * 0.5;
+          const eyeCenterY = rect.top + rect.height * 0.5;
+
+          const viewW = Math.max(window.innerWidth || 1024, 320);
+          const viewH = Math.max(window.innerHeight || 768, 320);
+
+          const rawDx = (clientX - eyeCenterX) / (viewW * 0.48);
+          const rawDy = (clientY - eyeCenterY) / (viewH * 0.48);
+
+          // Tangente hiperbólica garante resposta natural perto do olho e saturação suave nas bordas da página
+          this.normalizedCursor.x = Math.tanh(rawDx * 1.15);
+          this.normalizedCursor.y = Math.tanh(rawDy * 1.15);
+
+          this.recomputeActiveTargetLook();
+        }
+
+        /**
+         * Recalcula targetLook a partir de normalizedCursor respeitando os limites angulares do modo atual
+         */
+        recomputeActiveTargetLook() {
+          this.maxYaw = THREE.MathUtils.lerp(
+            this.limitsComplete.yaw,
+            this.limitsExpanded.yaw,
+            this.expansionProgress
+          );
+          this.maxPitch = THREE.MathUtils.lerp(
+            this.limitsComplete.pitch,
+            this.limitsExpanded.pitch,
+            this.expansionProgress
+          );
+
+          this.targetLook.x = THREE.MathUtils.clamp(this.normalizedCursor.x, -1, 1) * this.maxYaw;
+          this.targetLook.y = THREE.MathUtils.clamp(this.normalizedCursor.y, -1, 1) * this.maxPitch;
+        }
+
+        /**
+         * Alterna entre pausar ("Fixar visualização") e retomar ("Retomar movimento") a rotação no modo expandido
+         */
+        setRotationPaused(paused) {
+          this.isRotationPaused = !!paused;
+          if (!this.pauseBtn) return;
+
+          if (this.isRotationPaused) {
+            this.pauseBtn.setAttribute('aria-pressed', 'true');
+            this.pauseBtn.classList.add('is-paused');
+            this.pauseBtnText.textContent = 'Retomar movimento';
+            this.iconPause.classList.add('hidden');
+            this.iconResume.classList.remove('hidden');
+          } else {
+            this.pauseBtn.setAttribute('aria-pressed', 'false');
+            this.pauseBtn.classList.remove('is-paused');
+            this.pauseBtnText.textContent = 'Fixar visualização';
+            this.iconResume.classList.add('hidden');
+            this.iconPause.classList.remove('hidden');
+            // Ao retomar, recalcular a meta atual para que o damping faça uma transição suave sem saltos
+            if (this.hasGlobalCursor) {
+              this.updateTargetLookFromClientXY(this.lastClientX, this.lastClientY);
+            }
+          }
+        }
+
+        /**
+         * Seleciona uma das 9 estruturas anatômicas no modo expandido, pausa automaticamente a rotação,
+         * aplica destaque visual discreto e abre o painel com as 5 condições clínicas correspondentes.
+         */
+        selectStructure(structureId) {
+          if (this.mode !== 'expanded') return;
+          const index = this.anatomyStructures.findIndex((s) => s.id === structureId);
+          if (index === -1) return;
+
+          const spec = this.anatomyStructures[index];
+          this.selectedStructureId = structureId;
+
+          // Comportamento automático obrigatório: pausar o acompanhamento do cursor mantendo a orientação atual
+          this.setRotationPaused(true);
+
+          // Aplicar destaque visual discreto na estrutura 3D selecionada e nos rótulos/linhas SVG
+          this.updateStructureHighlights();
+
+          // Atualizar conteúdo do painel clínico
+          this.clinicalStepBadge.textContent = `Estrutura ${index + 1} de ${this.anatomyStructures.length}`;
+          this.clinicalTitle.textContent = spec.name;
+          this.clinicalDescription.textContent = spec.description;
+          this.clinicalCounter.textContent = `${index + 1} de ${this.anatomyStructures.length}`;
+
+          this.clinicalList.innerHTML = '';
+          spec.conditions.forEach((cond, i) => {
+            const li = document.createElement('li');
+            li.className = 'p-2.5 rounded-xl bg-clinical-50/90 border border-clinical-200/80 leading-relaxed';
+            li.innerHTML =
+              `<div class="font-semibold text-clinical-900 flex items-center gap-1.5">` +
+              `<span class="w-4 h-4 rounded-full bg-clinical-200/80 text-clinical-800 text-[10px] inline-flex items-center justify-center font-semibold flex-shrink-0">${i + 1}</span>` +
+              `<span>${cond.name}</span>` +
+              `</div>` +
+              `<p class="text-clinical-700 mt-1 pl-5.5">${cond.detail}</p>`;
+            this.clinicalList.appendChild(li);
+          });
+
+          const wasHidden = this.clinicalPanel.classList.contains('hidden');
+          this.clinicalPanel.classList.remove('hidden');
+
+          if (wasHidden) {
+            // Reajustar o canvas suavemente caso o painel lateral tenha alterado a largura do palco no desktop
+            requestAnimationFrame(() => {
+              this.updateResponsiveLayout();
+            });
+          } else {
+            this.updateAnnotationPositions();
+            this.renderFrame();
+          }
+        }
+
+        /**
+         * Fecha o painel de informações clínicas e remove o destaque de seleção
+         */
+        closeClinicalPanel() {
+          this.selectedStructureId = null;
+          this.updateStructureHighlights();
+
+          if (!this.clinicalPanel.classList.contains('hidden')) {
+            this.clinicalPanel.classList.add('hidden');
+            requestAnimationFrame(() => {
+              this.updateResponsiveLayout();
+            });
+          } else {
+            this.renderFrame();
+          }
+        }
+
+        /**
+         * Navega entre estruturas anterior/próxima no painel clínico sem reativar o movimento
+         */
+        stepSelectedStructure(delta) {
+          if (this.mode !== 'expanded') return;
+          const currentIndex = this.anatomyStructures.findIndex((s) => s.id === this.selectedStructureId);
+          const baseIndex = currentIndex === -1 ? 0 : currentIndex;
+          const nextIndex = (baseIndex + delta + this.anatomyStructures.length) % this.anatomyStructures.length;
+          this.selectStructure(this.anatomyStructures[nextIndex].id);
+        }
+
+        /**
+         * Atualiza o destaque visual 3D (emissive sutil) e o estilo dos rótulos/linhas SVG
+         */
+        updateStructureHighlights() {
+          const activeId = this.selectedStructureId;
+
+          this.anatomyStructures.forEach((spec) => {
+            const isSelected = spec.id === activeId;
+            const hasSelection = !!activeId;
+
+            // Destaque 3D discreto nos materiais da estrutura
+            const matEntries = this.structureMaterials[spec.id] || [];
+            matEntries.forEach((entry) => {
+              if (isSelected) {
+                entry.material.emissive.setHex(0x1B4D7E);
+                entry.material.emissiveIntensity = 0.38;
+              } else {
+                entry.material.emissive.setHex(entry.baseEmissiveHex);
+                entry.material.emissiveIntensity = 1.0;
+              }
+            });
+
+            // Destaque no rótulo HTML e na linha SVG
+            const domRefs = this.labelElements[spec.id];
+            if (domRefs) {
+              domRefs.label.classList.toggle('is-selected', isSelected);
+              domRefs.label.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+              domRefs.line.classList.toggle('is-selected', isSelected);
+              domRefs.line.classList.toggle('is-dimmed', hasSelection && !isSelected);
+              domRefs.dot.classList.toggle('is-selected', isSelected);
+              domRefs.dot.classList.toggle('is-dimmed', hasSelection && !isSelected);
+            }
+          });
+        }
+
+        applyBlinkPose(closureAmount) {
+          if (!this.eyelidGroup) return;
+
+          if (closureAmount <= 0.005) {
+            this.eyelidGroup.visible = false;
+            return;
+          }
+
+          this.eyelidGroup.visible = true;
+          this.upperEyelidPivot.rotation.x = THREE.MathUtils.lerp(-1.12, 0.34, closureAmount);
+          this.lowerEyelidPivot.rotation.x = THREE.MathUtils.lerp(1.08, -0.14, closureAmount);
+        }
+
+        triggerBlink() {
+          if (this.mode !== 'complete' || this.isBlinking) return;
+          this.isBlinking = true;
+          this.blinkStartTime = performance.now();
+          this.blinkDuration = this.prefersReducedMotion ? 180 : 330;
+        }
+
+        toggleAnatomyMode() {
+          if (this.mode === 'expanding' || this.mode === 'collapsing') return;
+
+          const now = performance.now();
+          this.transitionStartTime = now;
+          this.transitionDuration = this.prefersReducedMotion ? 120 : 1550;
+
+          if (this.mode === 'complete') {
+            this.mode = 'expanding';
+            this.isBlinking = false;
+            this.applyBlinkPose(0);
+            this.setRotationPaused(false);
+            this.toggleBtn.disabled = true;
+            this.modeIndicator.className = 'w-2 h-2 rounded-full bg-amber-500 transition-colors';
+            this.modeLabel.textContent = 'Expandindo camadas anatômicas...';
+          } else if (this.mode === 'expanded') {
+            this.closeClinicalPanel();
+            this.setRotationPaused(false);
+            this.pauseBtn.classList.add('hidden');
+            this.mode = 'collapsing';
+            this.overlayEl.classList.remove('is-visible');
+            this.overlayEl.setAttribute('aria-hidden', 'true');
+            this.toggleBtn.disabled = true;
+            this.modeIndicator.className = 'w-2 h-2 rounded-full bg-amber-500 transition-colors';
+            this.modeLabel.textContent = 'Reconstruindo globo ocular...';
+          }
+        }
+
+        /**
+         * Interpola as transformações locais das 9 estruturas entre `progress = 0` (Completo) e `progress = 1` (Expandido)
+         * preservando o movimento global do conjunto em `this.gazeGroup`.
+         */
+        applyExpansionState(progress) {
+          const t = progress;
+
+          const antAlpha = THREE.MathUtils.clamp(1.0 - t * 2.1, 0, 1);
+          this.anteriorScleraMat.opacity = antAlpha;
+          this.anteriorScleraMesh.visible = antAlpha > 0.01;
+          const antScale = THREE.MathUtils.lerp(1.0, 0.92, t);
+          this.anteriorScleraMesh.scale.setScalar(antScale);
+
+          this.corneaRimMat.opacity = t * 0.55;
+
+          const structureRotY = THREE.MathUtils.lerp(0, -Math.PI * 0.41, t);
+          const structureRotX = THREE.MathUtils.lerp(0, 0.05, t);
+
+          const spreadMultiplier = this.currentSpreadMultiplier || 1.0;
+
+          this.anatomyStructures.forEach((spec) => {
+            const node = this.structureNodes[spec.id];
+            if (!node) return;
+
+            const targetX = spec.expandedPos.x * spreadMultiplier;
+            const targetY = spec.expandedPos.y;
+            const targetZ = spec.expandedPos.z;
+            node.position.x = THREE.MathUtils.lerp(spec.assembledPos.x, targetX, t);
+            node.position.y = THREE.MathUtils.lerp(spec.assembledPos.y, targetY, t);
+            node.position.z = THREE.MathUtils.lerp(spec.assembledPos.z, targetZ, t);
+
+            node.rotation.set(structureRotX, structureRotY, 0);
+          });
+
+          const shadowScaleX = THREE.MathUtils.lerp(1.0, 3.25 * spreadMultiplier, t);
+          const shadowScaleZ = THREE.MathUtils.lerp(1.0, 0.72, t);
+          this.shadowMesh.scale.set(shadowScaleX, 1.0, shadowScaleZ);
+          this.shadowMesh.position.y = THREE.MathUtils.lerp(-1.52, -1.35, t);
+
+          const targetCamZ = THREE.MathUtils.lerp(this.completeCameraZ, this.expandedCameraZ, t);
+          this.camera.position.z = targetCamZ;
+          this.camera.lookAt(0, 0, 0);
+        }
+
+        /**
+         * Calcula e atualiza as posições 2D das linhas-guia SVG e dos rótulos HTML
+         * utilizando as matrizes de transformação globais (`updateWorldMatrix`, `localToWorld`, `project(camera)`).
+         */
+        updateAnnotationPositions() {
+          if (!this.camera || !this.stageEl || !this.masterGroup) return;
+
+          const width = this.stageEl.clientWidth;
+          const height = this.stageEl.clientHeight;
+          if (width === 0 || height === 0) return;
+
+          this.svgLinesEl.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+          // Atualizar toda a hierarquia de matrizes globais da cena antes de projetar os pontos 3D
+          this.masterGroup.updateWorldMatrix(true, true);
+          this.camera.updateMatrixWorld();
+
+          const isMobile = width < 640;
+          const isTablet = width >= 640 && width < 1024;
+
+          const topTier0Y = isMobile ? height * 0.10 : isTablet ? height * 0.12 : height * 0.13;
+          const topTier1Y = isMobile ? height * 0.21 : isTablet ? height * 0.21 : height * 0.22;
+          const bottomTier0Y = isMobile ? height * 0.90 : isTablet ? height * 0.88 : height * 0.87;
+          const bottomTier1Y = isMobile ? height * 0.79 : isTablet ? height * 0.79 : height * 0.78;
+
+          const safeMargin = isMobile ? 36 : 52;
+          const worldVec = new THREE.Vector3();
+          const projectedItems = [];
+
+          this.anatomyStructures.forEach((spec) => {
+            const node = this.structureNodes[spec.id];
+            const domRefs = this.labelElements[spec.id];
+            if (!node || !domRefs) return;
+
+            // Atualizar matriz global da estrutura e converter o ponto de ancoragem local para coordenadas globais
+            node.updateWorldMatrix(true, false);
+            worldVec.copy(spec.anchorOffset);
+            node.localToWorld(worldVec);
+
+            // Projetar coordenadas globais 3D para o espaço normalizado da câmera (NDC)
+            worldVec.project(this.camera);
+
+            const anchorX = (worldVec.x * 0.5 + 0.5) * width;
+            const anchorY = (-worldVec.y * 0.5 + 0.5) * height;
+
+            let labelY;
+            if (spec.row === 'top') {
+              labelY = spec.tier === 0 ? topTier0Y : topTier1Y;
+            } else {
+              labelY = spec.tier === 0 ? bottomTier0Y : bottomTier1Y;
+            }
+
+            const labelX = Math.max(safeMargin, Math.min(width - safeMargin, anchorX));
+
+            projectedItems.push({
+              spec,
+              domRefs,
+              anchorX,
+              anchorY,
+              labelX,
+              labelY
+            });
+          });
+
+          // Garantir espaçamento horizontal mínimo entre rótulos da mesma faixa durante rotações 3D
+          const minGap = isMobile ? 68 : isTablet ? 86 : 102;
+          ['top-0', 'top-1', 'bottom-0', 'bottom-1'].forEach((groupKey) => {
+            const [row, tierStr] = groupKey.split('-');
+            const tier = parseInt(tierStr, 10);
+            const group = projectedItems
+              .filter((item) => item.spec.row === row && item.spec.tier === tier)
+              .sort((a, b) => a.labelX - b.labelX);
+
+            for (let i = 1; i < group.length; i++) {
+              const prev = group[i - 1];
+              const curr = group[i];
+              if (curr.labelX - prev.labelX < minGap) {
+                const mid = (curr.labelX + prev.labelX) * 0.5;
+                prev.labelX = Math.max(safeMargin, mid - minGap * 0.5);
+                curr.labelX = Math.min(width - safeMargin, mid + minGap * 0.5);
+              }
+            }
+          });
+
+          // Renderizar coordenadas nas linhas SVG e nos botões de rótulo HTML
+          projectedItems.forEach((item) => {
+            const { spec, domRefs, anchorX, anchorY, labelX, labelY } = item;
+            const lineEndY = spec.row === 'top' ? labelY + 14 : labelY - 14;
+            const midY = (anchorY + lineEndY) * 0.5;
+
+            domRefs.dot.setAttribute('cx', anchorX.toFixed(1));
+            domRefs.dot.setAttribute('cy', anchorY.toFixed(1));
+
+            const points = `${anchorX.toFixed(1)},${anchorY.toFixed(1)} ${anchorX.toFixed(1)},${midY.toFixed(1)} ${labelX.toFixed(1)},${lineEndY.toFixed(1)}`;
+            domRefs.line.setAttribute('points', points);
+
+            domRefs.label.style.left = `${labelX.toFixed(1)}px`;
+            domRefs.label.style.top = `${labelY.toFixed(1)}px`;
+          });
+        }
+
+        /**
+         * Seleção inteligente por Raycaster no modo expandido:
+         * resolve interseções em superfícies transparentes sobrepostas (Córnea, Cristalino, Humor Vítreo)
+         * e camadas internas (Íris, Corpo Ciliar, Retina, Coroide, Esclera, Nervo Óptico).
+         */
+        pickExpandedStructureAtClientXY(clientX, clientY) {
+          const rect = this.canvasEl.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) return null;
+
+          this.pointerNDC.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+          this.pointerNDC.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+          this.masterGroup.updateWorldMatrix(true, true);
+          this.raycaster.setFromCamera(this.pointerNDC, this.camera);
+
+          const hits = this.raycaster.intersectObjects(this.expandedPickableMeshes, true);
+          if (hits.length === 0) return null;
+
+          // Mapear primeira interseção de cada estrutura atingida pelo raio
+          const uniqueHits = [];
+          const seenIds = new Set();
+          for (let i = 0; i < hits.length; i++) {
+            const hit = hits[i];
+            const sId = hit.object && hit.object.userData ? hit.object.userData.structureId : null;
+            if (sId && !seenIds.has(sId)) {
+              seenIds.add(sId);
+              uniqueHits.push({
+                structureId: sId,
+                distance: hit.distance,
+                point: hit.point,
+                isTransparentVolume: !!hit.object.userData.isTransparentVolume
+              });
+            }
+          }
+
+          if (uniqueHits.length === 0) return null;
+          if (uniqueHits.length === 1) return uniqueHits[0].structureId;
+
+          // Se o primeiro hit é um meio transparente (ex: Humor Vítreo ou Córnea) e há uma estrutura opaca logo atrás,
+          // verificar de qual centro anatômico o clique na tela está mais próximo
+          const first = uniqueHits[0];
+          if (first.isTransparentVolume) {
+            const opaqueHit = uniqueHits.find((h) => !h.isTransparentVolume);
+            if (opaqueHit) {
+              const centerA = new THREE.Vector3();
+              const centerB = new THREE.Vector3();
+              this.structureNodes[first.structureId].getWorldPosition(centerA);
+              this.structureNodes[opaqueHit.structureId].getWorldPosition(centerB);
+              centerA.project(this.camera);
+              centerB.project(this.camera);
+
+              const distA = Math.hypot(centerA.x - this.pointerNDC.x, centerA.y - this.pointerNDC.y);
+              const distB = Math.hypot(centerB.x - this.pointerNDC.x, centerB.y - this.pointerNDC.y);
+              return distB < distA * 1.15 ? opaqueHit.structureId : first.structureId;
+            }
+          }
+
+          return first.structureId;
+        }
+
+        updateResponsiveLayout() {
+          if (!this.stageEl || !this.renderer || !this.camera) return;
+
+          const width = this.stageEl.clientWidth || 960;
+          const height = this.stageEl.clientHeight || 540;
+          const aspect = width / height;
+
+          this.renderer.setSize(width, height, false);
+          this.camera.aspect = aspect;
+          this.camera.updateProjectionMatrix();
+
+          if (width < 640) {
+            this.completeCameraZ = Math.max(6.4, 4.8 / Math.max(aspect, 0.55));
+            this.expandedCameraZ = Math.max(11.0, 9.1 / Math.max(aspect, 0.55));
+            this.currentSpreadMultiplier = 0.78;
+            this.masterGroup.scale.setScalar(0.92);
+          } else if (width < 1024) {
+            this.completeCameraZ = 5.9;
+            this.expandedCameraZ = Math.max(9.4, 10.8 / Math.max(aspect, 0.8));
+            this.currentSpreadMultiplier = 0.90;
+            this.masterGroup.scale.setScalar(0.96);
+          } else {
+            this.completeCameraZ = 5.5;
+            this.expandedCameraZ = aspect < 1.45 ? 9.4 : 8.4;
+            this.currentSpreadMultiplier = aspect < 1.45 ? 0.92 : 1.0;
+            this.masterGroup.scale.setScalar(1.0);
+          }
+
+          this.applyExpansionState(this.expansionProgress);
+          if (this.mode === 'expanded' || this.mode === 'expanding') {
+            this.updateAnnotationPositions();
+          }
+          this.renderFrame();
+        }
+
+        bindEvents() {
+          // 1. Rastreamento global do cursor em qualquer posição da página (window)
+          this.onGlobalPointerMove = (e) => {
+            if (e.pointerType === 'touch') return;
+            this.lastClientX = e.clientX;
+            this.lastClientY = e.clientY;
+            this.hasGlobalCursor = true;
+            this.updateTargetLookFromClientXY(e.clientX, e.clientY);
+          };
+
+          // Quando o usuário rolar a página com mouse, atualizar o ângulo em relação à nova posição do olho na tela
+          this.onWindowScroll = () => {
+            if (this.touchState.isScrollingPage) return;
+            if (this.hasGlobalCursor) {
+              this.updateTargetLookFromClientXY(this.lastClientX, this.lastClientY);
+            }
+          };
+
+          // Quando o cursor sair da janela do navegador, manter a última orientação válida
+          this.onDocumentMouseLeave = () => {
+            // Não zeramos targetLook: o olho preserva a última orientação válida e retoma suavemente quando o cursor voltar
+          };
+
+          // 2. Comportamento equivalente viável em Smartphones (Toque no modelo vs Toque global fora do componente)
+          this.onStageTouchStart = (e) => {
+            if (!e.touches || e.touches.length === 0) return;
+            const touch = e.touches[0];
+            this.touchState.activeOnStage = true;
+            this.touchState.startX = touch.clientX;
+            this.touchState.startY = touch.clientY;
+            this.touchState.lastX = touch.clientX;
+            this.touchState.lastY = touch.clientY;
+            this.touchState.moved = false;
+            this.touchState.isScrollingPage = false;
+
+            // Orientar suavemente para o ponto tocado
+            this.updateTargetLookFromClientXY(touch.clientX, touch.clientY);
+          };
+
+          this.onStageTouchMove = (e) => {
+            if (!this.touchState.activeOnStage || !e.touches || e.touches.length === 0) return;
+            const touch = e.touches[0];
+            const dx = touch.clientX - this.touchState.startX;
+            const dy = touch.clientY - this.touchState.startY;
+
+            if (Math.hypot(dx, dy) > 8) {
+              this.touchState.moved = true;
+            }
+
+            // Se o gesto for predominantemente vertical fora de um arrasto horizontal intencional, respeitar rolagem
+            if (!this.touchState.isScrollingPage && Math.abs(dy) > Math.abs(dx) * 1.7 && Math.abs(dy) > 18) {
+              this.touchState.isScrollingPage = true;
+              return;
+            }
+
+            if (!this.touchState.isScrollingPage) {
+              this.updateTargetLookFromClientXY(touch.clientX, touch.clientY);
+            }
+          };
+
+          this.onStageTouchEnd = () => {
+            this.touchState.activeOnStage = false;
+            this.touchState.isScrollingPage = false;
+          };
+
+          // Toque fora do componente: orienta o olho para a posição global do toque sem interferir na rolagem ou nos links
+          this.onGlobalTouchStart = (e) => {
+            if (!e.touches || e.touches.length === 0) return;
+            if (this.stageEl.contains(e.target)) return;
+            const touch = e.touches[0];
+            this.touchState.isScrollingPage = false;
+            this.updateTargetLookFromClientXY(touch.clientX, touch.clientY);
+          };
+
+          this.onGlobalTouchMove = (e) => {
+            if (!this.stageEl.contains(e.target)) {
+              this.touchState.isScrollingPage = true;
+            }
+          };
+
+          this.onGlobalTouchEnd = () => {
+            this.touchState.isScrollingPage = false;
+          };
+
+          // 3. Clique no Canvas: Piscar (Modo Completo) ou Selecionar Estrutura 3D (Modo Expandido)
+          this.onCanvasClick = (e) => {
+            if (this.touchState.moved) {
+              this.touchState.moved = false;
+              return;
+            }
+
+            const rect = this.canvasEl.getBoundingClientRect();
+            const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+            const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+
+            if (this.mode === 'complete') {
+              this.pointerNDC.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+              this.pointerNDC.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+              this.raycaster.setFromCamera(this.pointerNDC, this.camera);
+              const hits = this.raycaster.intersectObjects(this.clickableMeshes, true);
+              if (hits.length > 0) {
+                this.triggerBlink();
+              }
+            } else if (this.mode === 'expanded') {
+              const pickedId = this.pickExpandedStructureAtClientXY(clientX, clientY);
+              if (pickedId) {
+                this.selectStructure(pickedId);
+              }
+            }
+          };
+
+          // Acessibilidade por teclado no canvas e fechamento do painel com Escape
+          this.onCanvasKeyDown = (e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && this.mode === 'complete') {
+              e.preventDefault();
+              this.triggerBlink();
+            }
+          };
+
+          this.onGlobalKeyDown = (e) => {
+            if (e.key === 'Escape' && this.selectedStructureId) {
+              this.closeClinicalPanel();
+            }
+          };
+
+          // 4. Botões de ação (Explorar / Reconstruir, Fixar / Retomar e Painel Clínico)
+          this.onToggleClick = () => {
+            this.toggleAnatomyMode();
+          };
+
+          this.onPauseClick = () => {
+            if (this.mode === 'expanded') {
+              this.setRotationPaused(!this.isRotationPaused);
+            }
+          };
+
+          this.onCloseClinicalClick = () => {
+            this.closeClinicalPanel();
+          };
+
+          this.onPrevStructureClick = () => {
+            this.stepSelectedStructure(-1);
+          };
+
+          this.onNextStructureClick = () => {
+            this.stepSelectedStructure(1);
+          };
+
+          this.onWindowResize = () => {
+            this.updateResponsiveLayout();
+          };
+
+          // Registrar listeners globais e locais sem duplicação
+          window.addEventListener('pointermove', this.onGlobalPointerMove, { passive: true });
+          window.addEventListener('scroll', this.onWindowScroll, { passive: true });
+          document.addEventListener('mouseleave', this.onDocumentMouseLeave, { passive: true });
+          window.addEventListener('touchstart', this.onGlobalTouchStart, { passive: true });
+          window.addEventListener('touchmove', this.onGlobalTouchMove, { passive: true });
+          window.addEventListener('touchend', this.onGlobalTouchEnd, { passive: true });
+          window.addEventListener('keydown', this.onGlobalKeyDown);
+          window.addEventListener('resize', this.onWindowResize);
+
+          this.stageEl.addEventListener('touchstart', this.onStageTouchStart, { passive: true });
+          this.stageEl.addEventListener('touchmove', this.onStageTouchMove, { passive: true });
+          this.stageEl.addEventListener('touchend', this.onStageTouchEnd, { passive: true });
+
+          this.canvasEl.addEventListener('click', this.onCanvasClick);
+          this.canvasEl.addEventListener('keydown', this.onCanvasKeyDown);
+          this.toggleBtn.addEventListener('click', this.onToggleClick);
+          this.pauseBtn.addEventListener('click', this.onPauseClick);
+          this.closeClinicalBtn.addEventListener('click', this.onCloseClinicalClick);
+          this.prevStructureBtn.addEventListener('click', this.onPrevStructureClick);
+          this.nextStructureBtn.addEventListener('click', this.onNextStructureClick);
+
+          // 5. IntersectionObserver: pausa renderização fora da viewport mantendo a posição-alvo atualizada
+          if ('IntersectionObserver' in window) {
+            this.intersectionObserver = new IntersectionObserver(
+              (entries) => {
+                entries.forEach((entry) => {
+                  const wasInViewport = this.isInViewport;
+                  this.isInViewport = entry.isIntersecting;
+                  if (!wasInViewport && this.isInViewport) {
+                    // Ao entrar na tela durante a rolagem, orientar imediatamente para a posição atual do mouse
+                    if (this.hasGlobalCursor) {
+                      this.updateTargetLookFromClientXY(this.lastClientX, this.lastClientY);
+                    }
+                    if (this.mode === 'complete' || (this.mode === 'expanded' && !this.isRotationPaused)) {
+                      const baseRotX = THREE.MathUtils.lerp(this.baseCompleteRotation.x, 0, this.expansionProgress);
+                      const baseRotY = THREE.MathUtils.lerp(this.baseCompleteRotation.y, 0, this.expansionProgress);
+                      this.gazeGroup.rotation.x = baseRotX + this.targetLook.y;
+                      this.gazeGroup.rotation.y = baseRotY + this.targetLook.x;
+                      this.currentLook.x = this.targetLook.x;
+                      this.currentLook.y = this.targetLook.y;
+                      if (this.mode === 'expanded') {
+                        this.updateAnnotationPositions();
+                      }
+                      this.renderFrame();
+                    }
+                  }
+                });
+              },
+              { threshold: 0.05 }
+            );
+            this.intersectionObserver.observe(this.stageEl);
+          }
+        }
+
+        easeInOutQuint(x) {
+          return x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2;
+        }
+
+        startLoop() {
+          const tick = (now) => {
+            if (this.disposed) return;
+            this.rafId = requestAnimationFrame(tick);
+
+            if (!this.isInViewport && this.mode !== 'expanding' && this.mode !== 'collapsing') {
+              return;
+            }
+
+            let needsRender = false;
+            let annotationsNeedUpdate = false;
+
+            // 1. Modo Completo: acompanhamento global do cursor + piscar
+            if (this.mode === 'complete') {
+              this.recomputeActiveTargetLook();
+              const targetRotY = this.baseCompleteRotation.y + this.targetLook.x;
+              const targetRotX = this.baseCompleteRotation.x + this.targetLook.y;
+
+              const dx = targetRotX - this.gazeGroup.rotation.x;
+              const dy = targetRotY - this.gazeGroup.rotation.y;
+
+              if (Math.abs(dx) > 0.00015 || Math.abs(dy) > 0.00015) {
+                const factor = this.prefersReducedMotion ? 0.35 : this.dampingFactor;
+                this.gazeGroup.rotation.x += dx * factor;
+                this.gazeGroup.rotation.y += dy * factor;
+                this.currentLook.x = this.gazeGroup.rotation.y - this.baseCompleteRotation.y;
+                this.currentLook.y = this.gazeGroup.rotation.x - this.baseCompleteRotation.x;
+                needsRender = true;
+              }
+
+              if (this.isBlinking) {
+                const elapsed = now - this.blinkStartTime;
+                const u = Math.min(1, elapsed / this.blinkDuration);
+
+                let closure = 0;
+                if (u < 0.42) {
+                  const p = u / 0.42;
+                  closure = Math.sin(p * (Math.PI / 2));
+                } else if (u < 0.54) {
+                  closure = 1.0;
+                } else {
+                  const p = (u - 0.54) / 0.46;
+                  closure = Math.cos(p * (Math.PI / 2));
+                }
+
+                this.applyBlinkPose(closure);
+                needsRender = true;
+
+                if (u >= 1) {
+                  this.isBlinking = false;
+                  this.applyBlinkPose(0);
+                }
+              }
+            }
+
+            // 2. Modo Expandido: conjunto anatômico acompanha o cursor em 3D (exceto quando pausado)
+            if (this.mode === 'expanded' && !this.isRotationPaused) {
+              this.recomputeActiveTargetLook();
+              const targetRotY = this.targetLook.x;
+              const targetRotX = this.targetLook.y;
+
+              const dx = targetRotX - this.gazeGroup.rotation.x;
+              const dy = targetRotY - this.gazeGroup.rotation.y;
+
+              if (Math.abs(dx) > 0.00015 || Math.abs(dy) > 0.00015) {
+                const factor = this.prefersReducedMotion ? 0.35 : this.dampingFactor;
+                this.gazeGroup.rotation.x += dx * factor;
+                this.gazeGroup.rotation.y += dy * factor;
+                this.currentLook.x = this.gazeGroup.rotation.y;
+                this.currentLook.y = this.gazeGroup.rotation.x;
+                needsRender = true;
+                annotationsNeedUpdate = true;
+              }
+            }
+
+            // 3. Transição: Olho Completo -> Anatomia Expandida Interativa
+            if (this.mode === 'expanding') {
+              const elapsed = now - this.transitionStartTime;
+              const rawU = Math.min(1, elapsed / this.transitionDuration);
+              this.expansionProgress = this.easeInOutQuint(rawU);
+
+              this.recomputeActiveTargetLook();
+              const baseRotX = THREE.MathUtils.lerp(this.baseCompleteRotation.x, 0, this.expansionProgress);
+              const baseRotY = THREE.MathUtils.lerp(this.baseCompleteRotation.y, 0, this.expansionProgress);
+
+              const targetRotX = baseRotX + this.targetLook.y;
+              const targetRotY = baseRotY + this.targetLook.x;
+
+              this.gazeGroup.rotation.x += (targetRotX - this.gazeGroup.rotation.x) * 0.14;
+              this.gazeGroup.rotation.y += (targetRotY - this.gazeGroup.rotation.y) * 0.14;
+
+              this.applyExpansionState(this.expansionProgress);
+              needsRender = true;
+
+              if (rawU >= 1) {
+                this.mode = 'expanded';
+                this.expansionProgress = 1;
+                this.recomputeActiveTargetLook();
+                this.applyExpansionState(1);
+                annotationsNeedUpdate = true;
+
+                this.overlayEl.classList.add('is-visible');
+                this.overlayEl.setAttribute('aria-hidden', 'false');
+                this.canvasEl.classList.add('is-clickable');
+                this.pauseBtn.classList.remove('hidden');
+                this.setRotationPaused(false);
+
+                this.toggleBtn.disabled = false;
+                this.toggleBtn.setAttribute('aria-expanded', 'true');
+                this.toggleBtnText.textContent = 'Reconstruir olho';
+                this.iconExpand.classList.add('hidden');
+                this.iconCollapse.classList.remove('hidden');
+
+                this.modeIndicator.className = 'w-2 h-2 rounded-full bg-accent-blue transition-colors';
+                this.modeLabel.textContent = 'Modo Expandido — Anatomia 3D Interativa';
+                this.interactionHint.innerHTML =
+                  '<span>Clique em qualquer estrutura ou rótulo para ver 5 condições clínicas</span>';
+              }
+            }
+
+            // 4. Transição: Anatomia Expandida -> Reconstruir Olho Completo
+            if (this.mode === 'collapsing') {
+              const elapsed = now - this.transitionStartTime;
+              const rawU = Math.min(1, elapsed / this.transitionDuration);
+              const invProgress = 1 - this.easeInOutQuint(rawU);
+              this.expansionProgress = invProgress;
+
+              this.recomputeActiveTargetLook();
+              const baseRotX = THREE.MathUtils.lerp(this.baseCompleteRotation.x, 0, invProgress);
+              const baseRotY = THREE.MathUtils.lerp(this.baseCompleteRotation.y, 0, invProgress);
+
+              const targetRotX = baseRotX + this.targetLook.y;
+              const targetRotY = baseRotY + this.targetLook.x;
+
+              this.gazeGroup.rotation.x += (targetRotX - this.gazeGroup.rotation.x) * 0.14;
+              this.gazeGroup.rotation.y += (targetRotY - this.gazeGroup.rotation.y) * 0.14;
+
+              this.applyExpansionState(invProgress);
+              needsRender = true;
+
+              if (rawU >= 1) {
+                this.mode = 'complete';
+                this.expansionProgress = 0;
+                this.recomputeActiveTargetLook();
+                this.applyExpansionState(0);
+
+                this.canvasEl.classList.add('is-clickable');
+                this.toggleBtn.disabled = false;
+                this.toggleBtn.setAttribute('aria-expanded', 'false');
+                this.toggleBtnText.textContent = 'Explorar anatomia do olho';
+                this.iconCollapse.classList.add('hidden');
+                this.iconExpand.classList.remove('hidden');
+
+                this.modeIndicator.className = 'w-2 h-2 rounded-full bg-emerald-600 transition-colors';
+                this.modeLabel.textContent = 'Modo Interativo — Globo Ocular Completo';
+                this.interactionHint.innerHTML =
+                  '<span class="hidden sm:inline">Rastreamento global ativo • Clique no olho para piscar</span>' +
+                  '<span class="sm:hidden">Toque ou arraste para orientar • Toque no olho para piscar</span>';
+                needsRender = true;
+              }
+            }
+
+            if (annotationsNeedUpdate) {
+              this.updateAnnotationPositions();
+            }
+
+            if (needsRender) {
+              this.renderFrame();
+            }
+          };
+
+          this.renderFrame();
+          this.rafId = requestAnimationFrame(tick);
+        }
+
+        renderFrame() {
+          if (!this.renderer || !this.scene || !this.camera) return;
+          this.renderer.render(this.scene, this.camera);
+        }
+
+        /**
+         * Libera todos os recursos WebGL e remove todos os listeners globais e locais
+         */
+        dispose() {
+          this.disposed = true;
+          if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+          }
+          if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+          }
+
+          window.removeEventListener('pointermove', this.onGlobalPointerMove);
+          window.removeEventListener('scroll', this.onWindowScroll);
+          document.removeEventListener('mouseleave', this.onDocumentMouseLeave);
+          window.removeEventListener('touchstart', this.onGlobalTouchStart);
+          window.removeEventListener('touchmove', this.onGlobalTouchMove);
+          window.removeEventListener('touchend', this.onGlobalTouchEnd);
+          window.removeEventListener('keydown', this.onGlobalKeyDown);
+          window.removeEventListener('resize', this.onWindowResize);
+
+          this.stageEl.removeEventListener('touchstart', this.onStageTouchStart);
+          this.stageEl.removeEventListener('touchmove', this.onStageTouchMove);
+          this.stageEl.removeEventListener('touchend', this.onStageTouchEnd);
+
+          this.canvasEl.removeEventListener('click', this.onCanvasClick);
+          this.canvasEl.removeEventListener('keydown', this.onCanvasKeyDown);
+          this.toggleBtn.removeEventListener('click', this.onToggleClick);
+          this.pauseBtn.removeEventListener('click', this.onPauseClick);
+          this.closeClinicalBtn.removeEventListener('click', this.onCloseClinicalClick);
+          this.prevStructureBtn.removeEventListener('click', this.onPrevStructureClick);
+          this.nextStructureBtn.removeEventListener('click', this.onNextStructureClick);
+
+          this.geometries.forEach((g) => g.dispose && g.dispose());
+          this.materials.forEach((m) => m.dispose && m.dispose());
+          this.textures.forEach((t) => t.dispose && t.dispose());
+          if (this.renderer) {
+            this.renderer.dispose();
+          }
+        }
+      }
+
+      // Inicializar o componente quando o DOM estiver pronto
+      window.addEventListener('DOMContentLoaded', () => {
+        const eyeComponent = new HumanEye3DComponent({
+          stageEl: document.getElementById('grr-eye-stage'),
+          canvasEl: document.getElementById('grr-eye-canvas'),
+          overlayEl: document.getElementById('grr-eye-overlay'),
+          svgLinesEl: document.getElementById('grr-eye-svg-lines'),
+          labelsContainerEl: document.getElementById('grr-eye-labels-container'),
+          fallbackEl: document.getElementById('grr-webgl-fallback'),
+          toggleBtn: document.getElementById('grr-toggle-anatomy-btn'),
+          toggleBtnText: document.getElementById('grr-toggle-anatomy-text'),
+          iconExpand: document.getElementById('grr-btn-icon-expand'),
+          iconCollapse: document.getElementById('grr-btn-icon-collapse'),
+          pauseBtn: document.getElementById('grr-pause-rotation-btn'),
+          pauseBtnText: document.getElementById('grr-pause-rotation-text'),
+          iconPause: document.getElementById('grr-icon-pause'),
+          iconResume: document.getElementById('grr-icon-resume'),
+          clinicalPanel: document.getElementById('grr-clinical-panel'),
+          clinicalStepBadge: document.getElementById('grr-clinical-step-badge'),
+          clinicalTitle: document.getElementById('grr-clinical-title'),
+          clinicalDescription: document.getElementById('grr-clinical-description'),
+          clinicalList: document.getElementById('grr-clinical-list'),
+          clinicalCounter: document.getElementById('grr-clinical-counter'),
+          closeClinicalBtn: document.getElementById('grr-close-clinical-btn'),
+          prevStructureBtn: document.getElementById('grr-prev-structure-btn'),
+          nextStructureBtn: document.getElementById('grr-next-structure-btn'),
+          modeIndicator: document.getElementById('grr-mode-indicator'),
+          modeLabel: document.getElementById('grr-mode-label'),
+          interactionHint: document.getElementById('grr-interaction-hint'),
+          footerCaption: document.getElementById('grr-footer-caption')
+        });
+
+        window.GRREyeComponent = eyeComponent;
+      });
+    })();
+  </script><script>
+(function(){
+  const allowedOrigin=location.origin;
+  window.addEventListener('message',function(event){
+    if(event.origin!==allowedOrigin || event.source!==window.parent || !event.data || event.data.type!=='grr-eye-pointer')return;
+    const eye=window.GRREyeComponent;
+    if(!eye)return;
+    eye.lastClientX=event.data.x;
+    eye.lastClientY=event.data.y;
+    eye.hasGlobalCursor=true;
+    eye.updateTargetLookFromClientXY(event.data.x,event.data.y);
+  });
+  function reportHeight(){
+    const el=document.getElementById('anatomia-ocular');
+    if(!el)return;
+    const height=Math.ceil(el.getBoundingClientRect().height+4);
+    window.parent.postMessage({type:'grr-eye-height',height},allowedOrigin);
+  }
+  window.addEventListener('load',reportHeight);
+  window.addEventListener('resize',reportHeight);
+  if('ResizeObserver' in window) new ResizeObserver(reportHeight).observe(document.getElementById('anatomia-ocular'));
+  setTimeout(reportHeight,120);
+})();
+</script></body></html>
