@@ -10,4 +10,5 @@ for (const file of ['index.html', 'anatomia-ocular-3d.html', 'sobre.html', 'espe
   await copyFile(join(root, file), join(output, file));
 }
 await cp(join(root, 'assets'), join(output, 'assets'), { recursive: true });
+await cp(join(root, 'bio'), join(output, 'bio'), { recursive: true });
 console.log('Site estático preparado para Cloudflare Workers em dist/.');
